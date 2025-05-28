@@ -20,13 +20,21 @@ def get_tickers(inst_type='SPOT') -> list:
     return all_tickers
 
 
-def group_tickers(tickers: list):
+def group_tickers(tickers: list) -> dict:
     df_tickers = pd.DataFrame(tickers, columns=['tickers'])
     df_tickers['stablecoin'] = df_tickers['tickers'].apply(lambda x: x.split('-')[1])
     grouped = df_tickers.groupby("stablecoin")["tickers"].apply(list).to_dict()
     return grouped
 
 
+def write_to_json_file(data: dict) -> json:
+    with open("grouped_tickers.json", "w") as f:
+        json.dump(data, f, indent=2)
+
+
 tickers = get_tickers()
 
-group_tickers(tickers)
+grouped_tickers = group_tickers(tickers)
+
+write_to_json_file(grouped_tickers)
+
