@@ -18,3 +18,15 @@ def get_tickers(inst_type='SPOT') -> list:
         all_tickers.append(ticker['instId'])
 
     return all_tickers
+
+
+def group_tickers(tickers: list):
+    df_tickers = pd.DataFrame(tickers, columns=['tickers'])
+    df_tickers['stablecoin'] = df_tickers['tickers'].apply(lambda x: x.split('-')[1])
+    grouped = df_tickers.groupby("stablecoin")["tickers"].apply(list).to_dict()
+    return grouped
+
+
+tickers = get_tickers()
+
+group_tickers(tickers)
