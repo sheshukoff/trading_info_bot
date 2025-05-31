@@ -14,10 +14,9 @@ def get_local_tz() -> int:
     return int(offset_hours)
 
 
-def date_eight_month_ago() -> int:
-    hours_back = 1440 * 4
+def date_two_years_ago() -> int:
     now = datetime.now()
-    eight_month_ago = now - timedelta(hours=hours_back - 4)
+    eight_month_ago = now - timedelta(days=365 * 2)
     return int(eight_month_ago.replace(microsecond=0).timestamp() * 1000)
 
 
@@ -26,67 +25,87 @@ def now_date() -> int:
     return int(now.replace(microsecond=0).timestamp() * 1000)
 
 
-start_date = date_eight_month_ago()
-end_date = now_date()
-print('старт', start_date, 'конец', end_date)
+def extrac_history_data(inst_id, bar, limit, start_date):
+    endpoint = '/api/v5/market/history-candles'
+    params = {
+        'instId': inst_id,
+        'bar': bar,
+        'limit': limit,
+        'after': str(start_date)
+    }
 
-print(4 * 3600 * 1000 * 300)
+    url = 'https://www.okx.com' + endpoint
+    response = requests.get(url, params=params)
+    return response
 
 
-while start_date < end_date:
-    start_date += 4 * 3600 * 1000 * 300
+def extrac_local_data(inst_id, bar, limit, start_date):
+    endpoint = '/api/v5/market/history-candles'
+    params = {
+        'instId': inst_id,
+        'bar': bar,
+        'limit': limit,
+        'before': str(start_date)
+    }
 
-    if start_date > end_date:
-        print('конец', end_date)
-    print('старт', start_date)
+    url = 'https://www.okx.com' + endpoint
+    response = requests.get(url, params=params)
+    return response
 
-# print(int(date_two_years_ago().timestamp() * 1000), date_two_years_ago())
-# def get_history_candles(inst_id='BTC-USDT', bar='4H', limit=100):
-#     endpoint = '/api/v5/market/history-candles'
-#     params = {
-#         'instId': inst_id,
-#         'bar': bar,
-#         'limit': limit
-#     }
-#
-#     url = 'https://www.okx.com' + endpoint
-#     response = requests.get(url)
-#
-#     all_tickers = []
-#     print(response.json())
-#
-#     # for ticker in response.json()['data']:
-#     #     all_tickers.append(ticker['instId'])
-#     #
-#     # return all_tickers
-#
-#
-# get_history_candles()
 
-# start_date = int(date_two_years_ago().timestamp() * 1000
-# print(str(int(start_date.timestamp() * 1000)))
-# end_date =
+def test() -> pd.DataFrame:
+    days = 4 * 3600 * 1000 * 100
+    start_date = date_two_years_ago()
+    end_date = now_date()
+    df = pd.DataFrame()
+
+    while True:
+        start_date += days
+
+        if start_date < end_date:
+            print('старт', datetime.fromtimestamp(start_date / 1000))
+            data = extrac_history_data('BTC-USDT', '4H', 100, start_date)
+            df = pd.concat([pd.DataFrame(data.json()['data']), df], axis=0, ignore_index=True)
+        else:
+            break
+
+    return df
+
+
+def test2() -> pd.DataFrame:
+    df = pd.read_csv('BTC-USDT.csv')
+    first_date = pd.to_datetime(df.loc[0, 'ts'])
+    start_date = int(first_date.timestamp() * 1000)
+    print(start_date)
+    df = pd.DataFrame()
+
+    data = extrac_local_data('BTC-USDT', '4H', 300, start_date)
+    df = pd.concat([pd.DataFrame(data.json()['data']), df], axis=0, ignore_index=True)
+
+    return df
+
+
+columns = ['ts', 'open', 'high', 'lowest', 'close', 'volume', 'volCcy', 'volCcyQuote', 'confirm']
+df = test2()
+df = df.set_axis(columns, axis='columns')
+
+df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
+print(df)
+print(df['ts'].is_monotonic_decreasing)
+
+df2 = pd.read_csv('BTC-USDT.csv')
+
+df3 = pd.concat([df, df2], axis=0, ignore_index=True)
+
+print(df3.columns)
+df3['ts'] = pd.to_datetime(df3['ts'])
+print(df3['ts'].is_monotonic_decreasing)
+
+# df = pd.read_csv('BTC-USDT.csv')
 #
-#
-#
-# endpoint = '/api/v5/market/candles'
-# params = {
-#     'instId': 'BTC-USDT',
-#     'bar': '4H',  # 1-day candles
-#     'limit': '300',  # Last 100 days
-#     'after': '1749560050000'
-# }
-#
-# url = 'https://www.okx.com' + endpoint
-# response = requests.get(url, params=params)
-# print(response.json())
-# #
-# df = pd.DataFrame(response.json()['data'])
-#
-# columns = ['ts', 'open', 'high', 'lowest', 'close', 'volume', 'volCcy', 'volCcyQuote', 'confirm']
-#
-# df.columns = columns
-# print(df)
-#
-# df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
+# # df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
+# print(df['open'].min(), df['open'].max())
+# print()
+# print(df.sort_values(by='ts', ascending=True)['ts'].is_monotonic_increasing, 'монотонно возрастает')
+# # print(df['ts'].value_counts().head(30))
 # print(df)
