@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from tzlocal import get_localzone
 
 
@@ -14,7 +14,11 @@ def get_local_tz() -> int:
     return int(offset_hours)
 
 
-print(get_local_tz())
+def date_two_years_ago() -> datetime:
+    now = datetime.now()
+    two_years_ago = now - timedelta(days=365 * 2)
+    return two_years_ago.replace(microsecond=0)
+
 
 # def get_history_candles(inst_id='BTC-USDT', bar='4H', limit=100):
 #     endpoint = '/api/v5/market/history-candles'
@@ -56,6 +60,6 @@ print(get_local_tz())
 #
 # df.columns = columns
 #
-# df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=3)
+# df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
 # print(df)
 
