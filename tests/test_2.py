@@ -53,8 +53,7 @@ async def main():
         'Цены по BTC': short_running_task
     }
 
-    active_tasks = {}  #  можно вместо 'state' использовать метод task.canselled(),
-                       #  что показывает включенали задача
+    active_tasks = {}
 
     while True:
         try:
@@ -66,11 +65,11 @@ async def main():
                 print(task_info)
                 await start_task(available_tasks, active_tasks, user_input)
             else:
-                if task_info.get('state') is True:
+                print(task_info['task'].cancelled())
+                if not task_info['task'].cancelled():
                     await stop_task(active_tasks, user_input)
                 else:
                     await start_task(available_tasks, active_tasks, user_input)
-
         except KeyboardInterrupt:
             print('Exit')
 
