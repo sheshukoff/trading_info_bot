@@ -45,16 +45,7 @@ async def stop_task(active_tasks: dict, key: str) -> str:
     return f"{key} остановлена"
 
 
-async def main():
-    "Функция input пользователь что то вводит"
-
-    available_tasks = {
-        'RSI 14': long_running_task,
-        'Цены по BTC': short_running_task
-    }
-
-    active_tasks = {}
-
+async def processing_task(available_tasks: dict, active_tasks: dict):
     while True:
         try:
             user_input = await ainput("> ")
@@ -72,6 +63,18 @@ async def main():
                     await start_task(available_tasks, active_tasks, user_input)
         except KeyboardInterrupt:
             print('Exit')
+
+
+async def main():
+    "Функция input пользователь что то вводит"
+
+    available_tasks = {
+        'RSI 14': long_running_task,
+        'Цены по BTC': short_running_task
+    }
+
+    active_tasks = {}
+    await processing_task(available_tasks, active_tasks)
 
 
 if __name__ == "__main__":
