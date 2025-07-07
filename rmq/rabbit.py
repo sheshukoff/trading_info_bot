@@ -1,11 +1,15 @@
 import aio_pika
 from aiogram import Bot
-from config import Config
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
+
+RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 
 async def send_to_queue(number: int, reply_to: str, correlation_id: str, routing_key: str):
     """Отправка числа в очередь на обработку"""
-    connection = await aio_pika.connect(Config.RABBITMQ_URL)
+    connection = await aio_pika.connect(RABBITMQ_URL)
     channel = await connection.channel()
 
     await channel.default_exchange.publish(
@@ -23,7 +27,7 @@ async def send_to_queue(number: int, reply_to: str, correlation_id: str, routing
 async def setup_consumer(bot: Bot):  # Принимаем bot вместо dp # Для ответов в телеграмм
     """Запуск потребителя для обработки ответов"""
     print('Запуск потребителя для обработки ответов')
-    connection = await aio_pika.connect(Config.RABBITMQ_URL)
+    connection = await aio_pika.connect(RABBITMQ_URL)
     channel = await connection.channel()
 
     # Объявляем exchange для ответов
