@@ -1,15 +1,20 @@
 from aiogram import Bot, Dispatcher, types, Router
-from config import Config
 from rmq.rabbit import send_to_queue, setup_consumer
 import asyncio
 import logging
 from telegram.app import keyboards as kb
 from aiogram.types import Message
 from aiogram.filters import CommandStart
+from dotenv import dotenv_values
+
+config = dotenv_values("../.env")
+
+BOT_TOKEN = config.get("BOT_TOKEN")
+
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(Config.BOT_TOKEN)  # TODO переделать на .env
+bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 router = Router()
 
@@ -78,36 +83,3 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-# убрать handlers в handler.py
-
-
-# user -> 5 -> aiogram (main.py) -> RabbitMQ -> worker (worker.py) ->
-# -> RabbitMQ -> aiogram (main.py) -> user -> result (25)
-
-# core.py -> RabbitMQ -> aiogram (run.py) -> user (message)
-
-# redis
-
-# Now
-# 1. rabbitmq in docker
-# 2. processing_messages.py
-# 3. main.py (aiogram)
-# 4. task_scheduler.py
-
-
-# Run:
-# 1. rabbitmq in docker
-# 2. worker.py -> processing_messages.py
-# 3. main.py (aiogram) -> folder in telegram file main.py
-
-# RabbitMQ default login/pass = guest
-
-# сингнал - не нужна очередь ответов
-# новости - не нужна очередь ответов
-# входящие сообщения (торговать) - нужна очередь ответов
-
-# пришел сингал - подтвеждение - открыть позицию
-# пришел сингал - подтвеждение - закрыть позицию
-
-
-# убрать все лишнее почистить код print пока оставлю
