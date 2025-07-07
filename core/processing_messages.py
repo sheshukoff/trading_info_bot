@@ -1,14 +1,14 @@
 import aio_pika
 import asyncio
-from config import Config
-import time
-import random as rnd
+from dotenv import dotenv_values
 
-from aio_pika.connection import Connection
-from aio_pika.channel import Channel
 from aio_pika.exchange import Exchange
 from aio_pika.queue import Queue
 from aio_pika.message import IncomingMessage
+
+config = dotenv_values("../.env")
+
+RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 dictionary = {'купи батон': 'Напоминаю - купи батон',
               'хочу получать сигналы': 'Дисклаймер...',
@@ -28,7 +28,7 @@ dictionary = {'купи батон': 'Напоминаю - купи батон',
 
 
 async def init_rabbit_mq():
-    connection = await aio_pika.connect(Config.RABBITMQ_URL)
+    connection = await aio_pika.connect(RABBITMQ_URL)
     channel = await connection.channel()
     await channel.set_qos(prefetch_count=1)
 
@@ -147,7 +147,6 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print('Exit')
-    # asyncio.run(process_tasks())
 
 
 # try:
