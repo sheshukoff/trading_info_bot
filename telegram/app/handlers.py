@@ -4,7 +4,7 @@ from aiogram.types import Message
 from rmq.rabbit import send_to_queue
 from aiogram import types
 
-import telegram.application.keyboards as kb
+import telegram.app.keyboards as kb
 
 router = Router()
 

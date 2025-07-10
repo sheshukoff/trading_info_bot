@@ -4,7 +4,7 @@ import logging
 
 from rmq.rabbit import setup_consumer
 from dotenv import dotenv_values
-from telegram.application.handlers import router
+from telegram.app.handlers import router
 
 config = dotenv_values("../.env")
 BOT_TOKEN = config.get("BOT_TOKEN")
