@@ -24,12 +24,6 @@ async def command_start_handler(message: Message):
     await message.reply('Привет!', reply_markup=kb.main)
 
 
-# @router.callback_query(F.data == 'catalog')
-# async def catalog(callback: CallbackQuery):
-#     await callback.answer('Вы выбрали каталог')
-#     await callback.message.edit_text('Привет!', reply_markup=kb.main)
-
-
 @router.message()
 async def handler_reminder(message: types.Message):  # для обработки входящих сообщений
     user_message = message.text
