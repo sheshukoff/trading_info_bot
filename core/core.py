@@ -4,6 +4,7 @@
 # import strategies # данные
 import asyncio
 import processing_messages
+
 import telegram.main as telegram
 
 
@@ -19,17 +20,3 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print('Exit')
-
-# import module_a
-# import module_b
-#
-#
-# def main():
-#     print("[Core] Запускаем другие модули...")
-#
-#     module_a.main()  # Явный вызов main() из module_a
-#     module_b.main()  # Явный вызов main() из module_b
-#
-#
-# if __name__ == '__main__':
-#     main()
