@@ -3,6 +3,8 @@ import time
 from connection_okx.get_data import processing_data, safe_to_csv_file
 
 times_every_minutes = [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)]
+times_every_four_hour = [f'{h:02d}:00:00' for h in range(3, 24, 4)]
+time_once_day = '03:00:00'
 
 
 def job():
@@ -14,32 +16,24 @@ def scheduler_work_every_minutes(work_times: list, ticker: str, timeframe: str):
         schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
 
 
+def scheduler_work_every_four_hour(work_times: list, ticker: str, timeframe: str):
+    for work_time in work_times:
+        schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
+
+
+def scheduler_work_once_day(work_time: str, ticker: str, timeframe: str):
+    print(work_time)
+    schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
+
+
 scheduler_work_every_minutes(times_every_minutes, 'BTC-USDT', '1m')
-
-
-
-# work_hours = ['03:00', '07:00', '11:00', '15:00', '19:00', '23:00']
-#
-# for work_hour in work_hours:
-#     schedule.every().day.at(work_hour).do(job)
-
-
-
-# work_hours = ['11:36:00', '11:37:00', '11:38:00', '11:39:00']
-
-# for work_hour in work_hours:
-#     result = schedule.every().day.at(work_hour).do(processing_data, ticker='BTC-USDT', timeframe='1m')
-#     print(result)
-    # schedule.every().day.at(work_hour).do(job)
-
-    # schedule.every().minutes.do(job)
-    # schedule.every(15).seconds.do(job)
+# scheduler_work_every_minutes(times_every_four_hour, 'BTC-USDT', '4H')
+# scheduler_work_once_day(time_once_day, 'BTC-USDT', '1D')
 
 
 while True:
     schedule.run_pending()
     time.sleep(1)
-
 
 # сгенерировать для теста каждую минуту запускать, какую то работу job()
 # написать функцию, которая вызовет внешнюю
@@ -48,3 +42,6 @@ while True:
 
 # функция safe_data будет сохранять данные .csv - простой вариант
 # функция send_dataframe будет передавать dataframe в очередь rabbit_mq - то как должно быть
+
+# Возможен еще один вариант scheduler достает данные за какой то период (сейчас не важно)
+# и после того как он достанет данные можно наложить индикаторы на данные и затем сохранять их пока в csv file
