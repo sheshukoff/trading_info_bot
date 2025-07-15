@@ -31,7 +31,6 @@ def extrac_local_data(inst_id: str, bar: str, limit: int) -> requests.models.Res
         'instId': inst_id,
         'bar': bar,
         'limit': limit,
-        'after': now_date()
     }
 
     url = 'https://www.okx.com' + endpoint
@@ -53,7 +52,13 @@ def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFrame:
     return df.head(-1)
 
 
-print(processing_data('BTC-USDT', '4H'))
+def safe_to_csv_file(ticker: str, timeframe: str):
+    df = processing_data(ticker, timeframe)
+    print(df)
+    df.to_csv(f'{ticker}_{timeframe}.csv', index=False)
+
+
+# print(processing_data('BTC-USDT', '1m'))
 
 
 
