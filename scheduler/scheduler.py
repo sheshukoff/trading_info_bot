@@ -1,35 +1,70 @@
 import schedule
 import time
 
-ALARM_TIMES = {
-    '1m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)],
-    '5m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 5)],
-    '15m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 15)],
-    '30m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 30)],
-    '1H': [f"{h:02d}:00:00" for h in range(24)],
-    '4H': [f'{h:02d}:00:00' for h in range(3, 24, 4)],
-    '1D': ['03:00:00']
-}
+
+class Scheduler:
+    # Атрибуты
+    ALARM_TIMES = {
+        '1m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)],
+        '5m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 5)],
+        '15m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 15)],
+        '30m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 30)],
+        '1H': [f"{h:02d}:00:00" for h in range(24)],
+        '4H': [f'{h:02d}:00:00' for h in range(3, 24, 4)],
+        '1D': ['03:00:00']
+    }
+
+    # Конструктор
+    def __init__(self, function, interval, **kwargs):
+        try:
+            times = self.ALARM_TIMES[interval]
+            print(f'Работаю по интевалу {interval}')
+            if times:
+                for work_time in times:
+                    schedule.every().day.at(work_time).do(lambda: function(**kwargs))
+        except KeyError:
+            print(f'Такого таймфрейма нет: {interval}')
+
+        try:
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print('exit')
 
 
-def scheduler(function, interval, **kwargs):
-    try:
-        times = ALARM_TIMES[interval]
+# def one_plus_two(a, b):
+#     print(a + b)
+#     return a + b
 
-        if times:
-            for work_time in times:
-                schedule.every().day.at(work_time).do(lambda: function(**kwargs))
-    except KeyError:
-        print(f'Такого таймфрейма нет: {interval}')
+
+# scheduler = Scheduler(one_plus_two, '1m', a=4, b=7)
+
+
+# def scheduler(function, interval, **kwargs):
+#     try:
+#         times = ALARM_TIMES[interval]
+#
+#         if times:
+#             for work_time in times:
+#                 schedule.every().day.at(work_time).do(lambda: function(**kwargs))
+#     except KeyError:
+#         print(f'Такого таймфрейма нет: {interval}')
 
 
 if __name__ == '__main__':
-    try:
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print('exit')
+    def one_plus_two(a, b):
+        print(a + b)
+        return a + b
+
+
+    scheduler = Scheduler(one_plus_two, '1m', a=4, b=7)
+    # try:
+    #     while True:
+    #         schedule.run_pending()
+    #         time.sleep(1)
+    # except KeyboardInterrupt:
+    #     print('exit')
 
 # сгенерировать для теста каждую минуту запускать, какую то работу job()
 # написать функцию, которая вызовет внешнюю
