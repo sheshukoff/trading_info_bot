@@ -6,6 +6,13 @@ import asyncio
 import processing_messages
 
 import telegram.main as telegram
+from scheduler.scheduler import Scheduler
+from connection_okx.get_data import safe_to_csv_file
+
+scheduler = Scheduler(safe_to_csv_file, '1m', ticker='BTC-USDT', timeframe='1m')
+
+# scheduler(safe_to_csv_file, '1m', ticker='BTC-USDT', timeframe='1m')  # планировщик, который извлекает данные с
+# с биржи OKX и сохраняет в csv file
 
 
 async def main():
