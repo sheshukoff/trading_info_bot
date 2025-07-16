@@ -1,40 +1,35 @@
 import schedule
 import time
-from connection_okx.get_data import processing_data, safe_to_csv_file
 
-times_every_minutes = [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)]
-times_every_four_hour = [f'{h:02d}:00:00' for h in range(3, 24, 4)]
-time_once_day = '03:00:00'
-
-
-def job():
-    print("I'm working...")
-
-
-def scheduler_work_every_minutes(work_times: list, ticker: str, timeframe: str):
-    for work_time in work_times:
-        schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
+ALARM_TIMES = {
+    '1m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)],
+    '5m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 5)],
+    '15m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 15)],
+    '30m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 30)],
+    '1H': [f"{h:02d}:00:00" for h in range(24)],
+    '4H': [f'{h:02d}:00:00' for h in range(3, 24, 4)],
+    '1D': ['03:00:00']
+}
 
 
-def scheduler_work_every_four_hour(work_times: list, ticker: str, timeframe: str):
-    for work_time in work_times:
-        schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
+def scheduler(function, interval, **kwargs):
+    try:
+        times = ALARM_TIMES[interval]
+
+        if times:
+            for work_time in times:
+                schedule.every().day.at(work_time).do(lambda: function(**kwargs))
+    except KeyError:
+        print(f'Такого таймфрейма нет: {interval}')
 
 
-def scheduler_work_once_day(work_time: str, ticker: str, timeframe: str):
-    print(work_time)
-    schedule.every().day.at(work_time).do(safe_to_csv_file, ticker=ticker, timeframe=timeframe)
-
-
-scheduler_work_every_minutes(times_every_minutes, 'BTC-USDT', '1m')
-# scheduler_work_every_minutes(times_every_four_hour, 'BTC-USDT', '4H')
-# scheduler_work_once_day(time_once_day, 'BTC-USDT', '1D')
-
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
-
+if __name__ == '__main__':
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print('exit')
 
 # сгенерировать для теста каждую минуту запускать, какую то работу job()
 # написать функцию, которая вызовет внешнюю
@@ -50,3 +45,4 @@ while True:
 # Сейчас нужно проверить сколько времени нужно для извлечения данных, наложение индикаторов и полчение сигнала:
 
 
+# Нужно написать универсальную функцию для генерации списка будильников в разными интевалами
