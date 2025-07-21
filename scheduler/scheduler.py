@@ -1,64 +1,52 @@
+import asyncio
 import schedule
-import time
+from functools import partial
 
 
 class Scheduler:
-    # Атрибуты
-    ALARM_TIMES = {
-        '1m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(60)],
-        '5m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 5)],
-        '15m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 15)],
-        '30m': [f"{h:02d}:{m:02d}:00" for h in range(24) for m in range(0, 60, 30)],
-        '1H': [f"{h:02d}:00:00" for h in range(24)],
-        '4H': [f'{h:02d}:00:00' for h in range(3, 24, 4)],
+    __ALARM_TIMES = {
+        '1m': [f"{__h:02d}:{__m:02d}:00" for __h in range(24) for __m in range(60)],
+        '5m': [f"{__h:02d}:{__m:02d}:00" for __h in range(24) for __m in range(0, 60, 5)],
+        '15m': [f"{__h:02d}:{__m:02d}:00" for __h in range(24) for __m in range(0, 60, 15)],
+        '30m': [f"{__h:02d}:{__m:02d}:00" for __h in range(24) for __m in range(0, 60, 30)],
+        '1H': [f"{__h:02d}:00:00" for __h in range(24)],
+        '4H': [f'{__h:02d}:00:00' for __h in range(3, 24, 4)],
         '1D': ['03:00:00']
     }
 
-    # Конструктор
-    def __init__(self, function, interval, **kwargs):
-        try:
-            times = self.ALARM_TIMES[interval]
-            print(f'Работаю по интевалу {interval}')
-            if times:
-                for work_time in times:
-                    schedule.every().day.at(work_time).do(lambda: function(**kwargs))
-        except KeyError:
-            print(f'Такого таймфрейма нет: {interval}')
+    def __init__(self, function, interval, **kwargs):  # TODO сделать асинхронным
+        self.__function = function
+        self._interval = interval
+        self._kwargs = kwargs
+        self.__setup_alarm_times()
 
+    def __setup_alarm_times(self):  # TODO сделать асинхронным
+        try:
+            times = self.__ALARM_TIMES[self._interval]
+            for work_time in times:
+                job = partial(self.__function, **self._kwargs)
+                schedule.every().day.at(work_time).do(job)
+        except KeyError:
+            print(f'❌ Такого таймфрейма нет: {self._interval}')
+
+    async def run_async(self):
         try:
             while True:
                 schedule.run_pending()
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print('exit')
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            print("Scheduler task cancelled")
 
 
-# def one_plus_two(a, b):
-#     print(a + b)
-#     return a + b
-
-
-# scheduler = Scheduler(one_plus_two, '1m', a=4, b=7)
-
-
-# def scheduler(function, interval, **kwargs):
-#     try:
-#         times = ALARM_TIMES[interval]
+# if __name__ == '__main__':
+#     def one_plus_two(a, b):
+#         print(a + b)
+#         return a + b
 #
-#         if times:
-#             for work_time in times:
-#                 schedule.every().day.at(work_time).do(lambda: function(**kwargs))
-#     except KeyError:
-#         print(f'Такого таймфрейма нет: {interval}')
-
-
-if __name__ == '__main__':
-    def one_plus_two(a, b):
-        print(a + b)
-        return a + b
-
-
-    scheduler = Scheduler(one_plus_two, '1m', a=4, b=7)
+#
+#     scheduler = Scheduler(one_plus_two, '1m', a=7, b=5)
+#     asyncio.gather(scheduler.run_async())
+#     asyncio.run()
     # try:
     #     while True:
     #         schedule.run_pending()
@@ -81,3 +69,44 @@ if __name__ == '__main__':
 
 
 # Нужно написать универсальную функцию для генерации списка будильников в разными интевалами
+
+
+# При сбоях в работе планировщика, будет следующая проблема, будет прислано столько собщений,
+# сколько было заведено будильников (пометка возможной проблемы)
+
+# Домашнее задание
+# + Откатить обратно commit до самого свежего
+# + Пробежать дебагером по class Scheduler (Обратить внимание на появления переменных)
+
+# Отмечать + что сделано
+
+# посмотреть про классы с асинхронно
+# + посмотреть бублиотеку планировщика который будет асинхронным APScheduler, aiojobs, aiocron
+# + посмотреть время использования кода (измерить время) профилирование кода
+# Доп вопросы:
+#   Один пользователь может создать например:
+#       Все 7 tieframe'ов и 10 монет - это будет 70 объектов класса?
+
+
+
+# BTC 4H 1D
+# SOL 4H 1D
+# TON 4H 1D
+
+# Первый тип планировщиков должен просто извлекать данные и записывать
+    # Должна быть проверка проверка комбинации (Валюнтной пары и таймфрейма)
+    #
+    #
+# Второй тип планировщиков должен наложить индикаторы и сообщить есть ли сигнал
+    # Нужно понять кому расслылать сигналы
+    #
+    #
+
+
+
+# какая то планировщик ждет фуру +-
+# какая то планировщик принимает товар --
+# до пех пор пока какой то планировщик не раскложит на ячейки ---
+
+
+#
