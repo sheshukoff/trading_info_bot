@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from tzlocal import get_localzone
+import asyncio
 
 
 async def get_local_tz() -> int:
@@ -58,9 +59,12 @@ async def safe_to_csv_file(ticker: str, timeframe: str):
     df.to_csv(f'{ticker}_{timeframe}.csv', index=False)
 
 
-# print(processing_data('BTC-USDT', '1m'))
+async def main():
+    await safe_to_csv_file('BTC-USDT', '1m')
 
 
+if __name__ == '__main__':
+    asyncio.run(main())
 
 # print(df.tail(-1))
 # print(pd.infer_freq(df['ts']))
@@ -82,7 +86,6 @@ async def safe_to_csv_file(ticker: str, timeframe: str):
 # print(df.sort_values(by='ts', ascending=True)['ts'].is_monotonic_increasing, 'монотонно возрастает')
 # # print(df['ts'].value_counts().head(30))
 # print(df)
-
 
 
 # def extrac_history_data(inst_id, bar, limit, start_date):
