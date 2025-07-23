@@ -3,6 +3,12 @@ import schedule
 from functools import partial
 
 
+def wrap_async_func(async_func, **kwargs):
+    def wrapper():
+        asyncio.create_task(async_func(**kwargs))
+    return wrapper
+
+
 class Scheduler:
     __ALARM_TIMES = {
         '1m': [f"{__h:02d}:{__m:02d}:00" for __h in range(24) for __m in range(60)],
@@ -29,7 +35,7 @@ class Scheduler:
         try:
             times = self.__ALARM_TIMES[self._interval]
             for work_time in times:
-                job = partial(self.__function, **self._kwargs)
+                job = wrap_async_func(self.__function, **self._kwargs)
                 schedule.every().day.at(work_time).do(job)
         except KeyError:
             print(f'❌ Такого таймфрейма нет: {self._interval}')
