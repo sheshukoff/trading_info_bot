@@ -14,13 +14,18 @@ class Scheduler:
         '1D': ['03:00:00']
     }
 
-    def __init__(self, function, interval, **kwargs):  # TODO сделать асинхронным
+    def __init__(self, function, interval, **kwargs):
         self.__function = function
         self._interval = interval
         self._kwargs = kwargs
-        self.__setup_alarm_times()
 
-    def __setup_alarm_times(self):  # TODO сделать асинхронным
+    @classmethod
+    async def create(cls, function, interval, **kwargs):
+        self = cls(function, interval, **kwargs)
+        await self.__setup_alarm_times()
+        return self
+
+    async def __setup_alarm_times(self):
         try:
             times = self.__ALARM_TIMES[self._interval]
             for work_time in times:
@@ -37,7 +42,6 @@ class Scheduler:
         except asyncio.CancelledError:
             print("Scheduler task cancelled")
 
-
 # if __name__ == '__main__':
 #     def one_plus_two(a, b):
 #         print(a + b)
@@ -47,12 +51,12 @@ class Scheduler:
 #     scheduler = Scheduler(one_plus_two, '1m', a=7, b=5)
 #     asyncio.gather(scheduler.run_async())
 #     asyncio.run()
-    # try:
-    #     while True:
-    #         schedule.run_pending()
-    #         time.sleep(1)
-    # except KeyboardInterrupt:
-    #     print('exit')
+# try:
+#     while True:
+#         schedule.run_pending()
+#         time.sleep(1)
+# except KeyboardInterrupt:
+#     print('exit')
 
 # сгенерировать для теста каждую минуту запускать, какую то работу job()
 # написать функцию, которая вызовет внешнюю
@@ -88,20 +92,18 @@ class Scheduler:
 #       Все 7 tieframe'ов и 10 монет - это будет 70 объектов класса?
 
 
-
 # BTC 4H 1D
 # SOL 4H 1D
 # TON 4H 1D
 
 # Первый тип планировщиков должен просто извлекать данные и записывать
-    # Должна быть проверка проверка комбинации (Валюнтной пары и таймфрейма)
-    #
-    #
+# Должна быть проверка проверка комбинации (Валюнтной пары и таймфрейма)
+#
+#
 # Второй тип планировщиков должен наложить индикаторы и сообщить есть ли сигнал
-    # Нужно понять кому расслылать сигналы
-    #
-    #
-
+# Нужно понять кому расслылать сигналы
+#
+#
 
 
 # какая то планировщик ждет фуру +-
@@ -109,4 +111,4 @@ class Scheduler:
 # до пех пор пока какой то планировщик не раскложит на ячейки ---
 
 
-#
+# TODO следующим улучшение сделать класс MenagerSchedulers
