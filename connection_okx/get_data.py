@@ -1,10 +1,10 @@
 import requests
 import pandas as pd
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from tzlocal import get_localzone
 
 
-def get_local_tz() -> int:
+async def get_local_tz() -> int:
     local_tz = get_localzone()
     now = datetime.now(local_tz)
 
@@ -14,18 +14,18 @@ def get_local_tz() -> int:
     return int(offset_hours)
 
 
-def date_two_years_ago() -> int:
+async def date_two_years_ago() -> int:
     now = datetime.now()
     eight_month_ago = now - timedelta(days=365 * 2)
     return int(eight_month_ago.replace(microsecond=0).timestamp() * 1000)
 
 
-def now_date() -> int:
+async def now_date() -> int:
     now = datetime.now()
     return int(now.replace(microsecond=0).timestamp() * 1000)
 
 
-def extrac_local_data(inst_id: str, bar: str, limit: int) -> requests.models.Response:
+async def extrac_local_data(inst_id: str, bar: str, limit: int) -> requests.models.Response:
     endpoint = '/api/v5/market/candles'
     params = {
         'instId': inst_id,
@@ -39,21 +39,21 @@ def extrac_local_data(inst_id: str, bar: str, limit: int) -> requests.models.Res
     return response
 
 
-def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFrame:
-    result = extrac_local_data(ticker, timeframe, limit)
+async def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFrame:
+    result = await extrac_local_data(ticker, timeframe, limit)
     result = result.json()['data']
 
     columns = ['ts', 'open', 'high', 'lowest', 'close', 'volume', 'volCcy', 'volCcyQuote', 'confirm']
     df = pd.DataFrame(result, columns=columns)
 
-    df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
+    df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=await get_local_tz())
     df.sort_values(by='ts', inplace=True)
 
     return df.head(-1)
 
 
-def safe_to_csv_file(ticker: str, timeframe: str):
-    df = processing_data(ticker, timeframe)
+async def safe_to_csv_file(ticker: str, timeframe: str):
+    df = await processing_data(ticker, timeframe)
     print(df)
     df.to_csv(f'{ticker}_{timeframe}.csv', index=False)
 
