@@ -21,10 +21,10 @@ async def add_scheduler(scheduler_dict, function, ticker, timeframe):
 
 async def main():
     # Список монет (можешь дополнить своими)
-    coins = ["BTC-USDT"]  # "SOL-USDT", "XRP-USDT"
+    coins = ["BTC-USDT", "SOL-USDT", "XRP-USDT"]  # "SOL-USDT", "XRP-USDT"
 
     # Список таймфреймов (например, как на биржах или в TradingView)
-    timeframes = ["1m"]  # "4H", "1D"
+    timeframes = ["1m", "4H", "1D"]  # "4H", "1D"
 
     pairs = [(coin, tf) for coin in coins for tf in timeframes]
     print(pairs)
@@ -35,7 +35,7 @@ async def main():
         random_element = random.choice(pairs)
         ticker, timeframe = random_element
         await add_scheduler(SCHEDULERS, safe_to_csv_file, ticker, timeframe)
-        time.sleep(2)
+        await asyncio.sleep(1)
         count += 1
         print(len(SCHEDULERS))
         print(SCHEDULERS.keys())
