@@ -57,6 +57,7 @@ async def safe_to_csv_file(ticker: str, timeframe: str):
     df = await processing_data(ticker, timeframe)
     print(df)
     df.to_csv(f'{ticker}_{timeframe}.csv', index=False)
+    return df
 
 
 async def main():
