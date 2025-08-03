@@ -48,9 +48,23 @@ async def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFram
     df = pd.DataFrame(result, columns=columns)
 
     df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=await get_local_tz())
+    df = await change_type_data(df)
     df.sort_values(by='ts', inplace=True)
 
     return df.head(-1)
+
+
+async def change_type_data(df):
+    df['open'] = df['open'].astype('float64')
+    df['high'] = df['high'].astype('float64')
+    df['lowest'] = df['lowest'].astype('float64')
+    df['close'] = df['close'].astype('float64')
+    df['volume'] = df['volume'].astype('float64')
+    df['volCcy'] = df['volCcy'].astype('float64')
+    df['volCcyQuote'] = df['volCcyQuote'].astype('float64')
+    df['confirm'] = df['confirm'].astype('int8')
+
+    return df
 
 
 async def safe_to_csv_file(ticker: str, timeframe: str):
