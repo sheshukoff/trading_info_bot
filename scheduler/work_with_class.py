@@ -20,10 +20,12 @@ async def add_scheduler(scheduler_dict, function, ticker, timeframe):
     return s
 
 
-# async def main_2(ticker, timeframe):
-#     df = await safe_to_csv_file(ticker, timeframe)
-#     await rsi_strategy(df)
-#     await ema_strategy(df)
+async def main_2(ticker, timeframe):
+    df = await safe_to_csv_file(ticker, timeframe)
+    print('работет rsi_strategy')
+    print(await rsi_strategy(df))
+    print('работет ema_strategy')
+    print(await ema_strategy(df))
 
 
 async def main():
@@ -41,7 +43,7 @@ async def main():
     while count < 1:
         random_element = random.choice(pairs)
         ticker, timeframe = random_element
-        await add_scheduler(SCHEDULERS, safe_to_csv_file, ticker, timeframe)
+        await add_scheduler(SCHEDULERS, main_2, ticker, timeframe)
         await asyncio.sleep(1)
         count += 1
         print(len(SCHEDULERS))
@@ -57,10 +59,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-
-
-
-
-
-
