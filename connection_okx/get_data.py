@@ -9,6 +9,8 @@ async def get_local_tz() -> int:
     local_tz = get_localzone()
     now = datetime.now(local_tz)
 
+    await asyncio.sleep(0.05)
+
     offset_sec = now.utcoffset().total_seconds()
     offset_hours = offset_sec / 3600
 
@@ -36,7 +38,6 @@ async def extrac_local_data(inst_id: str, bar: str, limit: int) -> requests.mode
 
     url = 'https://www.okx.com' + endpoint
     response = requests.get(url, params=params)
-    print(type(response))
     return response
 
 
@@ -48,6 +49,9 @@ async def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFram
     df = pd.DataFrame(result, columns=columns)
 
     df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=await get_local_tz())
+
+    await asyncio.sleep(0.05)
+
     df = await change_type_data(df)
     df.sort_values(by='ts', inplace=True)
 
@@ -67,83 +71,14 @@ async def change_type_data(df):
     return df
 
 
-async def safe_to_csv_file(ticker: str, timeframe: str):
+async def get_data_okx(ticker: str, timeframe: str):
     df = await processing_data(ticker, timeframe)
-    print(df)
-    df.to_csv(f'{ticker}_{timeframe}.csv', index=False)
     return df
 
 
 async def main():
-    await safe_to_csv_file('BTC-USDT', '1m')
+    await get_data_okx('BTC-USDT', '1m')
 
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-# print(df.tail(-1))
-# print(pd.infer_freq(df['ts']))
-# print(df['ts'].is_monotonic_decreasing)
-#
-# df2 = pd.read_csv('BTC-USDT.csv')
-#
-# df3 = pd.concat([df, df2], axis=0, ignore_index=True)
-#
-# print(df3.columns)
-# df3['ts'] = pd.to_datetime(df3['ts'])
-# print(df3['ts'].is_monotonic_decreasing)
-
-# df = pd.read_csv('BTC-USDT.csv')
-#
-# # df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=get_local_tz())
-# print(df['open'].min(), df['open'].max())
-# print()
-# print(df.sort_values(by='ts', ascending=True)['ts'].is_monotonic_increasing, 'монотонно возрастает')
-# # print(df['ts'].value_counts().head(30))
-# print(df)
-
-
-# def extrac_history_data(inst_id, bar, limit, start_date):
-#     endpoint = '/api/v5/market/history-candles'
-#     params = {
-#         'instId': inst_id,
-#         'bar': bar,
-#         'limit': limit,
-#         'after': str(start_date)
-#     }
-#
-#     url = 'https://www.okx.com' + endpoint
-#     response = requests.get(url, params=params)
-#     return response
-
-
-# def test() -> pd.DataFrame:
-#     days = 4 * 3600 * 1000 * 100
-#     start_date = date_two_years_ago()
-#     end_date = now_date()
-#     df = pd.DataFrame()
-#
-#     while True:
-#         start_date += days
-#
-#         if start_date < end_date:
-#             print('старт', datetime.fromtimestamp(start_date / 1000))
-#             data = extrac_history_data('BTC-USDT', '4H', 100, start_date)
-#             df = pd.concat([pd.DataFrame(data.json()['data']), df], axis=0, ignore_index=True)
-#         else:
-#             break
-#
-#     return df
-#
-#
-# def test2() -> pd.DataFrame:
-#     df = pd.read_csv('BTC-USDT.csv')
-#     first_date = pd.to_datetime(df.loc[0, 'ts'])
-#     start_date = int(first_date.timestamp() * 1000)
-#     print(start_date)
-#     df = pd.DataFrame()
-#
-#     data = extrac_local_data('BTC-USDT', '4H', 300)
-#     df = pd.concat([pd.DataFrame(data.json()['data']), df], axis=0, ignore_index=True)
-#
-#     return df
