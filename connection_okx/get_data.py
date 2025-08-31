@@ -48,7 +48,7 @@ async def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFram
     columns = ['ts', 'open', 'high', 'lowest', 'close', 'volume', 'volCcy', 'volCcyQuote', 'confirm']
     df = pd.DataFrame(result, columns=columns)
 
-    df['ts'] = pd.to_datetime(df['ts'], unit='ms') + pd.Timedelta(hours=await get_local_tz())
+    df['ts'] = pd.to_datetime(pd.to_numeric(df['ts']), unit="ms") + pd.Timedelta(hours=await get_local_tz())
 
     await asyncio.sleep(0.05)
 
