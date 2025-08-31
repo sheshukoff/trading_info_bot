@@ -5,12 +5,12 @@ import schedule
 def wrap_async_func(load_function, strategy_functions, **kwargs):
     async def runner():
         # 1. сначала загружаем данные
-        data = await load_function(**kwargs)
+        data, ticker = await load_function(**kwargs)
 
         # 2. прокидываем в стратегию
         for strategy in strategy_functions:
             try:
-                await strategy(data)
+                await strategy(data, ticker)
             except Exception as e:
                 print(f"⚠️ Ошибка в стратегии {strategy.__name__}: {e}")
 
@@ -53,7 +53,8 @@ class Scheduler:
             print(f'❌ Такого таймфрейма нет: {self._interval}')
 
     async def add_strategy(self, strategy):
-        self._strategy_functions.append(strategy)
+        if strategy not in self._strategy_functions:
+            self._strategy_functions.append(strategy)
 
     async def run_async(self):
         try:
