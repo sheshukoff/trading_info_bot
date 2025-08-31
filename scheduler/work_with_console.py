@@ -1,5 +1,5 @@
 import asyncio
-from connection_okx.get_data import safe_to_csv_file
+from connection_okx.get_data import get_data_okx
 from strategies.strategies import rsi_strategy, ema_strategy
 from scheduler.scheduler import Scheduler
 
@@ -7,8 +7,8 @@ SCHEDULERS = {}
 RUN_TASKS = {}
 
 strategies = {
-    1: ("RSI стратегия", safe_to_csv_file, rsi_strategy),
-    2: ("EMA стратегия", safe_to_csv_file, ema_strategy),
+    1: ("RSI стратегия", get_data_okx, rsi_strategy),
+    2: ("EMA стратегия", get_data_okx, ema_strategy),
 }
 
 
@@ -32,11 +32,9 @@ async def add_task(load_function, strategy_function, ticker, timeframe, strategy
         scheduler = SCHEDULERS[scheduler_key]['scheduler']
         await scheduler.add_strategy(strategy_function)
 
-    # проверим нет ли уже стратегии
-    for s in RUN_TASKS[scheduler_key]:  # BTC_USDT_1m
-        if s["strategy_name"] == strategy_name:
-            print(f"⛔ Стратегия {strategy_name} уже подключена к {scheduler_key}")
-            return
+    if any(s['strategy_name'] == strategy_name for s in RUN_TASKS.get(scheduler_key, [])):
+        print(f"⛔ Стратегия {strategy_name} уже подключена к {scheduler_key}")
+        return
 
     # добавляем стратегию
     RUN_TASKS[scheduler_key].append({
@@ -60,7 +58,7 @@ async def choose_strategy():
         timeframe = await asyncio.to_thread(input, 'Введите таймфрейм (например: 1h): ')
 
         # print(coin.strip().upper(), timeframe.strip())
-        await asyncio.sleep(3)
+        await asyncio.sleep(0.1)
         yield coin.strip().upper(), timeframe.strip(), load_function, strategy_function, strategy_name
 
 
