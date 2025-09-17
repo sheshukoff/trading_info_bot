@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 
 
@@ -10,7 +10,7 @@ from aiogram_dialog import Dialog, setup_dialogs
 from dotenv import dotenv_values
 from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
-    window_start, window_disclaimer, window_strategy, window_coins,window_alarm_times, window_confirmation
+    window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_confirmation
 )
 
 dialog = Dialog(
