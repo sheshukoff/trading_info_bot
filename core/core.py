@@ -7,9 +7,9 @@ import processing_messages
 
 import telegram.main as telegram
 from scheduler.scheduler import Scheduler
-from connection_okx.get_data import safe_to_csv_file
+from connection_okx.get_data import get_data_okx
 
-scheduler = Scheduler(safe_to_csv_file, '1m', ticker='BTC-USDT', timeframe='1m')
+# scheduler = Scheduler(get_data_okx, '1m', ticker='BTC-USDT', timeframe='1m')
 
 # scheduler(safe_to_csv_file, '1m', ticker='BTC-USDT', timeframe='1m')  # планировщик, который извлекает данные с
 # с биржи OKX и сохраняет в csv file
