@@ -1,35 +1,44 @@
-from aiogram import Bot, Dispatcher
 import asyncio
 import logging
 
-from rmq.rabbit import setup_consumer
+from aiogram import Bot, Dispatcher
+from aiogram.filters import CommandStart
+
+
+from aiogram_dialog import Dialog, setup_dialogs
+
 from dotenv import dotenv_values
-from telegram.app.handlers import router
+from telegram.handlers import router, start
+from telegram.windows_for_dialogs import (
+    window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_confirmation
+)
 
-config = dotenv_values("../.env")
-BOT_TOKEN = config.get("BOT_TOKEN")
-
-
-logging.basicConfig(level=logging.INFO)
-
-bot = Bot(BOT_TOKEN)
-dp = Dispatcher()
+dialog = Dialog(
+    window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_confirmation
+)
 
 
 async def main():
+    logging.basicConfig(level=logging.INFO)
+    config = dotenv_values("../.env")
+    BOT_TOKEN = config.get("BOT_TOKEN")
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+    dp.include_router(dialog)
     dp.include_router(router)
+    dp.message.register(start, CommandStart())
 
-    # Передаем экземпляр bot вместо dp
-    rmq_connection = await setup_consumer(bot)
-
-    # Запуск бота
+    setup_dialogs(dp)
     await dp.start_polling(bot)
-
-    # При завершении закрываем соединение
-    print('закрываем соединение rmq')
-    await rmq_connection.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print('exit')
 
+# Планы на сегодня:
+# Закончить добавление стратегии
+# Затем запусктить эти стратегии в работу
+# По возможности сделать вывод информации (что делать покупать или продавать)
