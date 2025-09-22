@@ -2,6 +2,7 @@ import asyncio
 
 import pandas as pd
 from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
+from rmq.publisher import periodic_publisher
 
 
 async def get_last_close(df: pd.DataFrame) -> float:
@@ -22,7 +23,8 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str) -> str | None:
     print(rsi_14_last)
     last_time = await get_last_time(df)
 
-    return await coin_information_rsi(last_price, rsi_14_last, last_time, ticker)
+    message = await coin_information_rsi(last_price, rsi_14_last, last_time, ticker)
+    await periodic_publisher(message)
 
 
 async def ema_strategy(df: pd.DataFrame, ticker) -> str:
@@ -37,8 +39,8 @@ async def ema_strategy(df: pd.DataFrame, ticker) -> str:
     long_signal = ema_5_last > ema_12_last and ema_12_last > ema_25_last and close_last > wma_50_last
     short_signal = ema_5_last < ema_12_last and ema_12_last < ema_25_last and close_last < wma_50_last
     # print(close_last, long_signal, short_signal, last_time)
-
-    return await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker)
+    message = await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker)
+    await periodic_publisher(message)
 
 
 async def coin_information_rsi(last_price: float, last_rsi_value: float, last_time: str, ticker: str) -> str:
