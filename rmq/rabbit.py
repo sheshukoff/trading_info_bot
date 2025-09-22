@@ -2,7 +2,7 @@ import aio_pika
 from aiogram import Bot
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+config = dotenv_values("../.env")
 
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
