@@ -23,7 +23,7 @@ async def on_start_menu(callback, button, manager: DialogManager):
         chat_id = manager.event.message.chat.id
     else:
         chat_id = manager.event.from_user.id
-
+    print(chat_id)
     await manager.event.bot.send_message(
         chat_id=chat_id,
         text="📋 Главное меню:",
