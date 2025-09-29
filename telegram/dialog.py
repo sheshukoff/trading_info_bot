@@ -40,7 +40,7 @@ async def return_message():
 
                 # async for chat_id in CHAT_ID:
                 await bot.send_message(chat_id='5104570308', text=result)  # 5104570308
-                await bot.send_message(chat_id='251147722', text=result)
+                # await bot.send_message(chat_id='251147722', text=result)
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
