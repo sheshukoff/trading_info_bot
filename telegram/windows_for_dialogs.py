@@ -5,7 +5,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from telegram.states import MainSG
 from telegram.messages_for_dialog import start_comand_text, disclaimer_text
 from telegram.data_for_dialog import get_strategies_data, get_coins_data, get_alarm_times_data
-from telegram.handlers import on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data
+from telegram.handlers import on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data, on_choose_test
 
 selected_strategy = selected_data("strategies", "selected_strategy")
 selected_coins = selected_data("coins", "selected_coins")
@@ -83,7 +83,7 @@ window_alarm_times = Window(
                 item_id_getter=lambda item: item,
                 items='alarm_times',
                 type_factory=str,
-                on_click=make_on_selected("alarm_times", MainSG.summary),
+                on_click=make_on_selected("alarm_times", MainSG.ack_strategy),
 
             ),
             width=2,
@@ -91,6 +91,15 @@ window_alarm_times = Window(
         getter=get_alarm_times_data,
         state=MainSG.alarm_times,
     )
+
+window_ack_strategy = Window(
+    Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
+    Row(
+        Button(Const('Подтвердить выбранную стратегию'), id='ack_strategy', on_click=on_choose_test)
+    ),
+    getter=[selected_strategy, selected_coins, selected_alarm_times],
+    state=MainSG.ack_strategy
+)
 
 window_confirmation = Window(
         Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
