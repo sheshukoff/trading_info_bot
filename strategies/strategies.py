@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import pandas as pd
 from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
@@ -24,10 +25,17 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     last_time = await get_last_time(df)
 
     message = await coin_information_rsi(last_price, rsi_14_last, last_time, ticker, timeframe)
-    await periodic_publisher(message)
+
+    data = {
+        'message': message,
+        'report': f'RSI 14_{ticker}_{timeframe}',
+    }
+
+    file_json = json.dumps(data).encode("utf-8")
+    await periodic_publisher(file_json)
 
 
-async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> str:
+async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     ema_5_last = ema_5(df).iloc[-1]
     ema_12_last = ema_12(df).iloc[-1]
     ema_25_last = ema_25(df).iloc[-1]
@@ -40,11 +48,18 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> str:
     short_signal = ema_5_last < ema_12_last and ema_12_last < ema_25_last and close_last < wma_50_last
     # print(close_last, long_signal, short_signal, last_time)
     message = await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker, timeframe)
-    await periodic_publisher(message)
+
+    data = {
+        'message': message,
+        'report': f'EMA/WMA_{ticker}_{timeframe}',
+    }
+
+    file_json = json.dumps(data).encode("utf-8")
+    await periodic_publisher(file_json)
 
 
-async def coin_information_rsi(last_price: float, last_rsi_value: float, last_time: str, ticker: str, timeframe: str) -> str:
-
+async def coin_information_rsi(last_price: float, last_rsi_value: float, last_time: str, ticker: str,
+                               timeframe: str) -> str:
     if last_rsi_value < 30:
         print(f"""
     📊 Стратегия на отскок цены RSI 14
@@ -74,7 +89,8 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
     """
 
 
-async def summarize_trend_signal(close: float, long_signal: bool, short_signal: bool, last_time: str, ticker: str, timeframe: str) -> str:
+async def summarize_trend_signal(close: float, long_signal: bool, short_signal: bool, last_time: str, ticker: str,
+                                 timeframe: str) -> str:
     if long_signal == short_signal:
         signal_text = '⏸️ Нет сигнала — наблюдаем'
     elif long_signal:
@@ -105,13 +121,12 @@ async def summarize_trend_signal(close: float, long_signal: bool, short_signal: 
 async def main():
     df = pd.read_csv('../BTC-USDT_1m.csv')
     print(df.dtypes)
-    print(await rsi_strategy(df, "BTC-USDT"))
+    print(await rsi_strategy(df, "BTC-USDT", '1m'))
     # print(await ema_strategy(df, ticker))
 
 
 if __name__ == '__main__':
     asyncio.run(main())
-
 
 # Посмотреть примеры как работает сначала один отработал и пошел делать другое
 # Сначала получил информацию с биржи OKX, затем вывел информацию о решении покупки продажи и ожидания
