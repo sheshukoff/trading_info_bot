@@ -73,7 +73,7 @@ async def change_type_data(df):
 
 async def get_data_okx(ticker: str, timeframe: str):
     df = await processing_data(ticker, timeframe)
-    return df, ticker
+    return df, ticker, timeframe
 
 
 async def main():
