@@ -6,6 +6,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from telegram.app.keyboards import main_menu
 from telegram.states import MainSG
+from rmq.consumer import send_to_queue
 
 router = Router()
 
@@ -56,6 +57,27 @@ def selected_data(key: str, alias: str):
     async def getter(dialog_manager: DialogManager, **kwargs):
         return {alias or key: dialog_manager.dialog_data.get(key, [])}
     return getter
+
+
+async def selected_data_value(dialog_manager, key):
+    return dialog_manager.dialog_data.get(key, [])
+
+
+async def on_choose_strategy(c, b, manager: DialogManager):
+    # собираем выбранные данные
+    strategy = await selected_data_value(manager, "strategies")
+    coins = await selected_data_value(manager, "coins")
+    timeframe = await selected_data_value(manager, "alarm_times")
+
+    if manager.event.message:
+        chat_id = manager.event.message.chat.id
+    else:
+        chat_id = manager.event.from_user.id
+    print('chat_id', chat_id)
+
+    await send_to_queue(strategy, coins, timeframe, chat_id, 'test')  # кладем в RabbitMQ
+
+    await manager.switch_to(MainSG.summary)
 
 
 @router.message(F.text == 'Информация о боте')

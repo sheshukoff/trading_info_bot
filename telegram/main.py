@@ -12,6 +12,7 @@ from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_confirmation
 )
+from rmq.rabbit import setup_consumer
 
 dialog = Dialog(
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_confirmation
@@ -23,6 +24,8 @@ async def main():
     config = dotenv_values("../.env")
     BOT_TOKEN = config.get("BOT_TOKEN")
     bot = Bot(token=BOT_TOKEN)
+
+    rmq_connection = await setup_consumer(bot)
     dp = Dispatcher()
     dp.include_router(dialog)
     dp.include_router(router)
@@ -30,6 +33,7 @@ async def main():
 
     setup_dialogs(dp)
     await dp.start_polling(bot)
+    await rmq_connection.close()
 
 
 if __name__ == "__main__":

@@ -8,4 +8,5 @@ class MainSG(StatesGroup):
     strategies = State()
     coins = State()
     alarm_times = State()
+    ack_strategy = State()
     summary = State()
