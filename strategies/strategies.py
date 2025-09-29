@@ -36,7 +36,6 @@ async def ema_strategy(df: pd.DataFrame, ticker) -> str:
 
     long_signal = ema_5_last > ema_12_last and ema_12_last > ema_25_last and close_last > wma_50_last
     short_signal = ema_5_last < ema_12_last and ema_12_last < ema_25_last and close_last < wma_50_last
-    # print(close_last, long_signal, short_signal, last_time)
 
     return await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker)
 
