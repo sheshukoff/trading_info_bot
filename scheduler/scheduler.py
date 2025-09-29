@@ -5,12 +5,12 @@ import schedule
 def wrap_async_func(load_function, strategy_functions, **kwargs):
     async def runner():
         # 1. сначала загружаем данные
-        data, ticker = await load_function(**kwargs)
+        data, ticker, timeframe = await load_function(**kwargs)
 
         # 2. прокидываем в стратегию
         for strategy in strategy_functions:
             try:
-                await strategy(data, ticker)
+                await strategy(data, ticker, timeframe)
             except Exception as e:
                 print(f"⚠️ Ошибка в стратегии {strategy.__name__}: {e}")
 
