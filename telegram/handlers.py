@@ -8,6 +8,8 @@ from telegram.app.keyboards import main_menu
 from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 
+reports = {}
+
 router = Router()
 
 
@@ -73,7 +75,11 @@ async def on_choose_strategy(c, b, manager: DialogManager):
         chat_id = manager.event.message.chat.id
     else:
         chat_id = manager.event.from_user.id
-    print('chat_id', chat_id)
+
+    if f'{strategy}_{coins}_{timeframe}' not in reports:
+        reports[f'{strategy}_{coins}_{timeframe}'] = [chat_id]
+    else:
+        reports[f'{strategy}_{coins}_{timeframe}'].append(chat_id)
 
     await send_to_queue(strategy, coins, timeframe, chat_id, 'test')  # кладем в RabbitMQ
 

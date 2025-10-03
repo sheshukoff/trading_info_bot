@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 import aiorabbit
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
@@ -13,6 +14,8 @@ from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
 )
 
+from telegram.handlers import reports
+
 config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
@@ -24,9 +27,11 @@ dialog = Dialog(
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
 )
 
-CHAT_ID = ['251147722', '5104570308']
 
-# T = {:}
+async def iterate_chat_ids(chat_ids):
+    for chat_id in chat_ids:
+        await asyncio.sleep(0)
+        yield chat_id
 
 
 async def return_message():
@@ -35,12 +40,15 @@ async def return_message():
             print('Подключено')
             await client.queue_declare('periodic_queue')  # Создание очереди
             async for message in client.consume('periodic_queue'):  # достаю из очереди по одному сообщению
-                result = message.body.decode()
-                print(result)
+                result = json.loads(message.body.decode("utf-8"))
 
-                # async for chat_id in CHAT_ID:
-                await bot.send_message(chat_id='5104570308', text=result)  # 5104570308
-                # await bot.send_message(chat_id='251147722', text=result)
+                notification = result.get('message')  # сам отчет
+                report = result.get('report')  # по чем отчет
+
+                chat_ids = reports.get(report)
+                if chat_ids:
+                    async for chat_id in iterate_chat_ids(chat_ids):
+                        await bot.send_message(chat_id=chat_id, text=notification, parse_mode="HTML")  # 5104570308
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
@@ -77,3 +85,9 @@ if __name__ == "__main__":
 # Закончить добавление стратегии
 # Затем запусктить эти стратегии в работу
 # По возможности сделать вывод информации (что делать покупать или продавать)
+# Отредактировать отображение цены где монета стоит очень мало например PEPE-USDT редактировать в strategy
+# Telegram server says - Bad Request: chat not found если приходит такое сообщение то пользователя удалить из БД
+# По чистить код от принтов
+# Оставляю reports так как будет работать быстрее, БД для хранения
+# До 10 пользователей то окей пойдет просто меняю через БД, количество подключаемых стратегий (Дальше разный уровень пользователя)
+# Делаем FAST API надо посмотреть про API
