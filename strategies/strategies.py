@@ -1,9 +1,30 @@
 import asyncio
-import json
+import textwrap
 
 import pandas as pd
 from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
 from rmq.publisher import periodic_publisher
+
+
+def format_price(price: float, small_digit: int = 6) -> str:
+    """
+    Форматирует цену монеты:
+    - Без экспоненты
+    - Показывает заданное количество значащих цифр (по умолчанию 6)
+    - Убирает лишние нули и точку в конце
+    """
+    if price == 0:
+        return "0"
+
+    # формируем строку с нужным количеством значащих цифр
+    formatted = f"{price:.{small_digit}g}"
+
+    # если вдруг Python вернул экспоненту — переведём в float с фиксированным количеством знаков
+    if "e" in formatted or "E" in formatted:
+        formatted = f"{price:.{small_digit + 2}f}"
+
+    # убираем хвостовые нули и лишнюю точку
+    return formatted.rstrip("0").rstrip(".")
 
 
 async def get_last_close(df: pd.DataFrame) -> float:
@@ -24,15 +45,15 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     print(rsi_14_last)
     last_time = await get_last_time(df)
 
-    message = await coin_information_rsi(last_price, rsi_14_last, last_time, ticker, timeframe)
+    message, signal_active = await coin_information_rsi(last_price, rsi_14_last, last_time, ticker, timeframe)
 
-    data = {
-        'message': message,
-        'report': f'RSI 14_{ticker}_{timeframe}',
-    }
+    if signal_active:
+        data = {
+            'message': message,
+            'report': f'RSI 14_{ticker}_{timeframe}',
+        }
 
-    file_json = json.dumps(data).encode("utf-8")
-    await periodic_publisher(file_json)
+        await periodic_publisher(data)
 
 
 async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
@@ -46,7 +67,6 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
 
     long_signal = ema_5_last > ema_12_last and ema_12_last > ema_25_last and close_last > wma_50_last
     short_signal = ema_5_last < ema_12_last and ema_12_last < ema_25_last and close_last < wma_50_last
-    # print(close_last, long_signal, short_signal, last_time)
     message = await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker, timeframe)
 
     data = {
@@ -54,68 +74,52 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
         'report': f'EMA/WMA_{ticker}_{timeframe}',
     }
 
-    file_json = json.dumps(data).encode("utf-8")
-    await periodic_publisher(file_json)
+    await periodic_publisher(data)
 
 
 async def coin_information_rsi(last_price: float, last_rsi_value: float, last_time: str, ticker: str,
-                               timeframe: str) -> str:
+                               timeframe: str) -> tuple:
     if last_rsi_value < 30:
-        print(f"""
-    📊 Стратегия на отскок цены RSI 14
-    📈 Информация по монете: {ticker} таймфрейм {timeframe}
-    ─────────────────────────────────────────
-    💰 Цена закрытия:   {last_price:,.2f} USDT
-    📊 RSI (14):        {last_rsi_value:.2f}
-    🕒 Время:           {last_time}
-    ─────────────────────────────────────────
-    Цели
-    Первый TP {last_price * 1.03:.2f} 3% движения
-    Второй TP {last_price * 1.05:.2f} 5% движения
-    Третий TP {last_price * 1.08:.2f} 8% движения
-    """)
-        return f"""
-    📊 Стратегия на отскок цены RSI 14
-    📈 Информация по монете: {ticker} таймфрейм {timeframe}
-    ─────────────────────────────────────────
-    💰 Цена закрытия:   {last_price:,.2f} USDT
-    📊 RSI (14):        {last_rsi_value:.2f}
-    🕒 Время:           {last_time}
-    ─────────────────────────────────────────
-    Цели
-    Первый TP {last_price * 1.03:.2f} 3% движения
-    Второй TP {last_price * 1.05:.2f} 5% движения
-    Третий TP {last_price * 1.08:.2f} 8% движения
-    """
+        message = textwrap.dedent(f"""
+        📊 <b>Стратегия на отскок цены RSI 14</b>
+        📈 Информация по монете: <b>{ticker}</b> | Таймфрейм: <b>{timeframe}</b>
+        ────────────────────────────
+        💰 Цена закрытия: <b>{format_price(last_price)}</b> USDT
+        📊 RSI (14): <b>{last_rsi_value:.2f}</b>
+        🕒 Время: {last_time}
+        ────────────────────────────
+        Цели:
+        1️⃣ Первый TP: <b>{last_price * 1.03:.2f}</b> (3% движения)
+        2️⃣ Второй TP: <b>{last_price * 1.05:.2f}</b> (5% движения)
+        3️⃣ Третий TP: <b>{last_price * 1.08:.2f}</b> (8% движения)
+        """)
+
+        return message, True
+    return None, False
 
 
 async def summarize_trend_signal(close: float, long_signal: bool, short_signal: bool, last_time: str, ticker: str,
                                  timeframe: str) -> str:
     if long_signal == short_signal:
-        signal_text = '⏸️ Нет сигнала — наблюдаем'
+        signal_text = '⏸️ WAIT'
     elif long_signal:
-        signal_text = '🔼 LONG — рекомендуется покупать'
+        signal_text = '🔼 LONG'
     elif short_signal:
-        signal_text = '🔽 SHORT — рекомендуется продавать'
+        signal_text = '🔽 SHORT'
     else:
         signal_text = '❓ Неизвестный сигнал'
-    print(f"""
-    📊 Трендовая стратегия (EMA/WMA)
-    📈 Информация по монете: {ticker} таймфрейм {timeframe}
-    ────────────────────────────────────────────
-    💰 Цена закрытия:     {close} USDT
-    📍 Сигнал стратегии:  {signal_text}
-    🕒 Время:             {last_time}
+
+    message = textwrap.dedent(f"""
+    📊 <b>Трендовая стратегия EMA/WMA</b>
+    📈 Информация по монете: <b>{ticker}</b> 
+    🕒 Таймфрейм: <b>{timeframe}</b>
+    ────────────────────────────
+    💰 Цена закрытия: <b>{format_price(close)}</b> USDT
+    📍 Сигнал стратегии: <b>{signal_text}</b>
+    🕒 Время: {last_time}
     """)
 
-    return f"""
-    📊 Трендовая стратегия (EMA/WMA)
-    📈 Информация по монете: {ticker} таймфрейм {timeframe}
-    ────────────────────────────────────────────
-    💰 Цена закрытия:     {close} USDT
-    📍 Сигнал стратегии:  {signal_text}
-    🕒 Время:             {last_time}
-    """
+    return message
 
 
 async def main():
