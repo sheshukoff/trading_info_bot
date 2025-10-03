@@ -48,7 +48,7 @@ async def return_message():
                 chat_ids = reports.get(report)
                 if chat_ids:
                     async for chat_id in iterate_chat_ids(chat_ids):
-                        await bot.send_message(chat_id=chat_id, text=notification)  # 5104570308
+                        await bot.send_message(chat_id=chat_id, text=notification, parse_mode="HTML")  # 5104570308
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
