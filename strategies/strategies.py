@@ -6,25 +6,27 @@ from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
 from rmq.publisher import periodic_publisher
 
 
-def format_price(price: float, small_digit: int = 6) -> str:
+def format_price(price: float, small_digit: int = 12) -> str:
     """
     Форматирует цену монеты:
     - Без экспоненты
-    - Показывает заданное количество значащих цифр (по умолчанию 6)
-    - Убирает лишние нули и точку в конце
+    - До small_digit знаков после запятой (по умолчанию 10)
+    - Убирает лишние нули и точку
     """
     if price == 0:
         return "0"
 
-    # формируем строку с нужным количеством значащих цифр
-    formatted = f"{price:.{small_digit}g}"
-
-    # если вдруг Python вернул экспоненту — переведём в float с фиксированным количеством знаков
-    if "e" in formatted or "E" in formatted:
-        formatted = f"{price:.{small_digit + 2}f}"
+    # если число меньше 1 — используем больше знаков после запятой, чтобы не потерять точность
+    if abs(price) < 1:
+        formatted = f"{price:.{small_digit}f}"
+    else:
+        # для больших чисел — не более 6 знаков после запятой
+        formatted = f"{price:.6f}"
 
     # убираем хвостовые нули и лишнюю точку
-    return formatted.rstrip("0").rstrip(".")
+    formatted = formatted.rstrip("0").rstrip(".")
+
+    return formatted
 
 
 async def get_last_close(df: pd.DataFrame) -> float:
