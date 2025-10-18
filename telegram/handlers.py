@@ -2,11 +2,11 @@ from aiogram_dialog import DialogManager, ChatEvent, StartMode
 
 from aiogram_dialog.widgets.kbd import ManagedCheckbox, Select
 from aiogram import Router, F
-
 from aiogram.types import CallbackQuery, Message
 from telegram.app.keyboards import main_menu
 from telegram.states import MainSG
 from rmq.consumer import send_to_queue
+from telegram.api import add_user
 
 reports = {}
 
@@ -23,13 +23,28 @@ async def on_start_menu(callback, button, manager: DialogManager):
     # безопасно получаем chat_id
     if manager.event.message:
         chat_id = manager.event.message.chat.id
+        user_name = manager.event.message.chat.username or f"user_{chat_id}"
     else:
         chat_id = manager.event.from_user.id
-    print(chat_id)
+        user_name = manager.event.from_user.username or f"user_{chat_id}"
+
+    await add_user(chat_id, user_name)
     await manager.event.bot.send_message(
         chat_id=chat_id,
         text="📋 Главное меню:",
         reply_markup=main_menu
+    )
+
+
+async def return_start_menu(callback, button, manager: DialogManager):
+    if manager.event.message:
+        chat_id = manager.event.message.chat.id
+    else:
+        chat_id = manager.event.from_user.id
+
+    await manager.event.bot.send_message(
+        chat_id=chat_id,
+        text="📋 Главное меню:"
     )
 
 

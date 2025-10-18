@@ -5,7 +5,8 @@ from aiogram_dialog.widgets.text import Const, Format
 from telegram.states import MainSG
 from telegram.messages_for_dialog import start_comand_text, disclaimer_text
 from telegram.data_for_dialog import get_strategies_data, get_coins_data, get_alarm_times_data
-from telegram.handlers import on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data, on_choose_strategy
+from telegram.handlers import (on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data,
+                               on_choose_strategy, return_start_menu)
 
 selected_strategy = selected_data("strategies", "selected_strategy")
 selected_coins = selected_data("coins", "selected_coins")
@@ -104,7 +105,7 @@ window_ack_strategy = Window(
 window_confirmation = Window(
         Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
         Row(
-            Button(Const('В меню'), id='to_menu', on_click=on_start_menu),
+            Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
             Button(Const('Добавить еще'), id='add_strategy', on_click=on_add_strategy),
         ),
         getter=[selected_strategy, selected_coins, selected_alarm_times],

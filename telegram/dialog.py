@@ -5,7 +5,7 @@ import aiorabbit
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 
-
+from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
 from aiogram_dialog import Dialog, setup_dialogs
 
 from dotenv import dotenv_values
@@ -13,7 +13,7 @@ from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
 )
-
+from api import delete_user
 from telegram.handlers import reports
 
 config = dotenv_values("../.env")
@@ -27,11 +27,43 @@ dialog = Dialog(
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
 )
 
+bad_chat_ids = []
+
 
 async def iterate_chat_ids(chat_ids):
     for chat_id in chat_ids:
         await asyncio.sleep(0)
         yield chat_id
+
+
+async def unnecessary_chat_id(bad_chat_ids: list, chat_ids: list):
+    for bad_id in bad_chat_ids:
+        if bad_id in chat_ids:
+            chat_ids.remove(bad_id)
+
+
+async def send_message(chat_id: int, notification: str, report: str):
+    try:
+        await bot.send_message(chat_id=chat_id, text=notification, parse_mode="HTML")
+    except TelegramForbiddenError:
+        print(f"Пользователь c чатом id {chat_id} заблокировал бота.")
+        bad_chat_ids.append(chat_id)
+        await delete_user(chat_id)
+    except TelegramNotFound:
+        print(f"Пользователь c чатом id {chat_id} не найден (удалён или не писал боту)")
+        bad_chat_ids.append(chat_id)
+        await delete_user(chat_id)
+
+
+async def unpacking_message(message: json) -> tuple:
+    result = json.loads(message.body.decode("utf-8"))
+
+    notification = result.get('message')  # сам отчет
+    report = result.get('report')  # по чем отчет
+
+    chat_ids = reports.get(report)
+
+    return notification, report, chat_ids
 
 
 async def return_message():
@@ -40,18 +72,20 @@ async def return_message():
             print('Подключено')
             await client.queue_declare('periodic_queue')  # Создание очереди
             async for message in client.consume('periodic_queue'):  # достаю из очереди по одному сообщению
-                result = json.loads(message.body.decode("utf-8"))
 
-                notification = result.get('message')  # сам отчет
-                report = result.get('report')  # по чем отчет
+                notification, report, chat_ids = await unpacking_message(message)
 
-                chat_ids = reports.get(report)
                 if chat_ids:
                     async for chat_id in iterate_chat_ids(chat_ids):
-                        await bot.send_message(chat_id=chat_id, text=notification, parse_mode="HTML")  # 5104570308
+                        await send_message(chat_id, notification, report)
+
+                chat_ids = reports.get(report)
+                await unnecessary_chat_id(bad_chat_ids, chat_ids)
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
+
+                print(reports.get(report), 'должен оказаться пустым после блокировки бота')
     except Exception as error:
         print(error)
 
