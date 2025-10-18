@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
-from connection_oracle.queries_to_oracle import add_user
+import connection_oracle.queries_to_oracle as oracle
 
 
 class NewBook(BaseModel):
@@ -12,6 +12,10 @@ class NewBook(BaseModel):
 class NewUser(BaseModel):
     telegram_id: int
     telegram_name: str
+
+
+class DeleteUser(BaseModel):
+    telegram_id: int
 
 
 app = FastAPI()
@@ -59,20 +63,30 @@ def create_book(new_book: NewBook):
     return {'success': True, 'message': 'Пользователь успешно добавлен'}
 
 
-# @app.delete('/delete_users{telegram_id}')
-# async def delete_user(new_user: NewUser):
-#     try:
-#         result = await delete_user(new_user.telegram_id)
-#         return {'success': True, 'message': result}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post('/users{add_user}', tags=['Пользователи'], summary='Довабить пользователя')
+@app.post('/users', tags=['Пользователи'], summary='Довабить пользователя')
 async def create_user(new_user: NewUser):
     try:
-        result = await add_user(new_user.telegram_id, new_user.telegram_name)
-        return {'success': True, 'message': result}
+        result = await oracle.add_user(new_user.telegram_id, new_user.telegram_name)
+        return {
+            'success': True,
+            'id': result,
+            'telegram_id': new_user.telegram_id,
+            'telegram_name': new_user.telegram_name
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete('/users', tags=['Пользователи'], summary='Удалить пользователя')
+async def delete_user(delete_user: DeleteUser):
+    try:
+        result = await oracle.delete_user(delete_user.telegram_id)
+
+        return {
+            'success': True,
+            'id': result,
+            'telegram_id': delete_user.telegram_id,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
