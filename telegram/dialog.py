@@ -13,7 +13,7 @@ from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
 )
-
+from api import delete_user
 from telegram.handlers import reports
 
 config = dotenv_values("../.env")
@@ -48,9 +48,11 @@ async def send_message(chat_id: int, notification: str, report: str):
     except TelegramForbiddenError:
         print(f"Пользователь c чатом id {chat_id} заблокировал бота.")
         bad_chat_ids.append(chat_id)
+        await delete_user(chat_id)
     except TelegramNotFound:
         print(f"Пользователь c чатом id {chat_id} не найден (удалён или не писал боту)")
         bad_chat_ids.append(chat_id)
+        await delete_user(chat_id)
 
 
 async def unpacking_message(message: json) -> tuple:
