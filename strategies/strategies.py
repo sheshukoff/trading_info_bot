@@ -6,25 +6,27 @@ from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
 from rmq.publisher import periodic_publisher
 
 
-def format_price(price: float, small_digit: int = 6) -> str:
+def format_price(price: float, small_digit: int = 12) -> str:
     """
     Форматирует цену монеты:
     - Без экспоненты
-    - Показывает заданное количество значащих цифр (по умолчанию 6)
-    - Убирает лишние нули и точку в конце
+    - До small_digit знаков после запятой (по умолчанию 10)
+    - Убирает лишние нули и точку
     """
     if price == 0:
         return "0"
 
-    # формируем строку с нужным количеством значащих цифр
-    formatted = f"{price:.{small_digit}g}"
-
-    # если вдруг Python вернул экспоненту — переведём в float с фиксированным количеством знаков
-    if "e" in formatted or "E" in formatted:
-        formatted = f"{price:.{small_digit + 2}f}"
+    # если число меньше 1 — используем больше знаков после запятой, чтобы не потерять точность
+    if abs(price) < 1:
+        formatted = f"{price:.{small_digit}f}"
+    else:
+        # для больших чисел — не более 6 знаков после запятой
+        formatted = f"{price:.6f}"
 
     # убираем хвостовые нули и лишнюю точку
-    return formatted.rstrip("0").rstrip(".")
+    formatted = formatted.rstrip("0").rstrip(".")
+
+    return formatted
 
 
 async def get_last_close(df: pd.DataFrame) -> float:
@@ -50,7 +52,7 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     if signal_active:
         data = {
             'message': message,
-            'report': f'RSI 14_{ticker}_{timeframe}',
+            'report': f'RSI 14 {ticker} {timeframe}',
         }
 
         await periodic_publisher(data)
@@ -71,7 +73,7 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
 
     data = {
         'message': message,
-        'report': f'EMA/WMA_{ticker}_{timeframe}',
+        'report': f'EMA/WMA {ticker} {timeframe}',
     }
 
     await periodic_publisher(data)
@@ -83,11 +85,11 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
         message = textwrap.dedent(f"""
         📊 <b>Стратегия на отскок цены RSI 14</b>
         📈 Информация по монете: <b>{ticker}</b> | Таймфрейм: <b>{timeframe}</b>
-        ────────────────────────────
+        
         💰 Цена закрытия: <b>{format_price(last_price)}</b> USDT
         📊 RSI (14): <b>{last_rsi_value:.2f}</b>
         🕒 Время: {last_time}
-        ────────────────────────────
+        
         Цели:
         1️⃣ Первый TP: <b>{last_price * 1.03:.2f}</b> (3% движения)
         2️⃣ Второй TP: <b>{last_price * 1.05:.2f}</b> (5% движения)
@@ -113,7 +115,7 @@ async def summarize_trend_signal(close: float, long_signal: bool, short_signal: 
     📊 <b>Трендовая стратегия EMA/WMA</b>
     📈 Информация по монете: <b>{ticker}</b> 
     🕒 Таймфрейм: <b>{timeframe}</b>
-    ────────────────────────────
+    
     💰 Цена закрытия: <b>{format_price(close)}</b> USDT
     📍 Сигнал стратегии: <b>{signal_text}</b>
     🕒 Время: {last_time}
