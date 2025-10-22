@@ -29,6 +29,23 @@ async def add_task(load_function, strategy_function, ticker, timeframe, strategy
         print(f"ℹ️ Используем существующий Scheduler для {scheduler_key}")
 
 
+async def remove_task(ticker, timeframe):
+    scheduler_key = f"{ticker} {timeframe}"
+
+    if scheduler_key not in SCHEDULERS:
+        print(f"⚠️ Планировщик {scheduler_key} не найден")
+        return
+
+    scheduler_data = SCHEDULERS[scheduler_key]
+
+    task = scheduler_data.get('task')
+    task.cancel()
+
+    del SCHEDULERS[scheduler_key]
+
+    print(f"🛑 Планировщик {scheduler_key} удалён")
+
+
 async def choose_strategy():
     while True:
         for number, name in strategies.items():
