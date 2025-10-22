@@ -8,7 +8,10 @@ from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 from telegram.api import add_user
 
-reports = {}
+reports = {
+    "users": {},
+    "strategies": {}
+}
 
 router = Router()
 
@@ -91,10 +94,17 @@ async def on_choose_strategy(c, b, manager: DialogManager):
     else:
         chat_id = manager.event.from_user.id
 
-    if f'{strategy}_{coins}_{timeframe}' not in reports:
-        reports[f'{strategy}_{coins}_{timeframe}'] = [chat_id]
+    users = reports.get('users')
+    if chat_id not in users:
+        users[chat_id] = [f'{strategy} {coins} {timeframe}']
     else:
-        reports[f'{strategy}_{coins}_{timeframe}'].append(chat_id)
+        users[chat_id].append(f'{strategy} {coins} {timeframe}')
+
+    strategies = reports.get('strategies')
+    if f'{strategy} {coins} {timeframe}' not in strategies:
+        strategies[f'{strategy} {coins} {timeframe}'] = [chat_id]
+    else:
+        strategies[f'{strategy} {coins} {timeframe}'].append(chat_id)
 
     await send_to_queue(strategy, coins, timeframe, chat_id, 'test')  # кладем в RabbitMQ
 
