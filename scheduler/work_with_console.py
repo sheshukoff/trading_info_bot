@@ -4,7 +4,6 @@ from strategies.strategies import rsi_strategy, ema_strategy
 from scheduler.scheduler import Scheduler
 
 SCHEDULERS = {}
-RUN_TASKS = {}
 
 strategies = {
     1: ("RSI стратегия", get_data_okx, rsi_strategy),
@@ -13,9 +12,8 @@ strategies = {
 
 
 async def add_task(load_function, strategy_function, ticker, timeframe, strategy_name):
-    scheduler_key = f"{ticker}_{timeframe}"
+    scheduler_key = f"{ticker} {timeframe}"
 
-    # если уже есть scheduler для этой пары → не создаём новый
     if scheduler_key not in SCHEDULERS:
         scheduler = await Scheduler.create(load_function, strategy_function, timeframe, ticker=ticker, timeframe=timeframe)
         task = asyncio.create_task(scheduler.run_async())
@@ -24,25 +22,28 @@ async def add_task(load_function, strategy_function, ticker, timeframe, strategy
             "task": task,
             "ticker": ticker,
             "timeframe": timeframe,
+            "strategy_name": strategy_name
         }
-        RUN_TASKS[scheduler_key] = []
         print(f"✅ Создан новый Scheduler для {scheduler_key}")
     else:
         print(f"ℹ️ Используем существующий Scheduler для {scheduler_key}")
-        scheduler = SCHEDULERS[scheduler_key]['scheduler']
-        await scheduler.add_strategy(strategy_function)
 
-    if any(s['strategy_name'] == strategy_name for s in RUN_TASKS.get(scheduler_key, [])):
-        print(f"⛔ Стратегия {strategy_name} уже подключена к {scheduler_key}")
+
+async def remove_task(ticker, timeframe):
+    scheduler_key = f"{ticker} {timeframe}"
+
+    if scheduler_key not in SCHEDULERS:
+        print(f"⚠️ Планировщик {scheduler_key} не найден")
         return
 
-    # добавляем стратегию
-    RUN_TASKS[scheduler_key].append({
-        "strategy_name": strategy_name,
-        "strategy_func": strategy_function,
-    })
+    scheduler_data = SCHEDULERS[scheduler_key]
 
-    print(f"✅ Добавлена стратегия {strategy_name} к {scheduler_key}")
+    task = scheduler_data.get('task')
+    task.cancel()
+
+    del SCHEDULERS[scheduler_key]
+
+    print(f"🛑 Планировщик {scheduler_key} удалён")
 
 
 async def choose_strategy():
