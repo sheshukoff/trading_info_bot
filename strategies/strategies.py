@@ -52,7 +52,7 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     if signal_active:
         data = {
             'message': message,
-            'report': f'RSI 14_{ticker}_{timeframe}',
+            'report': f'RSI 14 {ticker} {timeframe}',
         }
 
         await periodic_publisher(data)
@@ -73,7 +73,7 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
 
     data = {
         'message': message,
-        'report': f'EMA/WMA_{ticker}_{timeframe}',
+        'report': f'EMA/WMA {ticker} {timeframe}',
     }
 
     await periodic_publisher(data)
