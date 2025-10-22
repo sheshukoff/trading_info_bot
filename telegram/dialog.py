@@ -61,7 +61,9 @@ async def unpacking_message(message: json) -> tuple:
     notification = result.get('message')  # сам отчет
     report = result.get('report')  # по чем отчет
 
-    chat_ids = reports.get(report)
+    strategies = reports.get('strategies')
+
+    chat_ids = strategies.get(report)
 
     return notification, report, chat_ids
 
@@ -79,13 +81,14 @@ async def return_message():
                     async for chat_id in iterate_chat_ids(chat_ids):
                         await send_message(chat_id, notification, report)
 
-                chat_ids = reports.get(report)
+                strategies = reports.get('strategies')
+                chat_ids = strategies.get(report)
+
                 await unnecessary_chat_id(bad_chat_ids, chat_ids)
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
-
-                print(reports.get(report), 'должен оказаться пустым после блокировки бота')
+                print(strategies.get(report), 'должен оказаться пустым после блокировки бота')
     except Exception as error:
         print(error)
 
