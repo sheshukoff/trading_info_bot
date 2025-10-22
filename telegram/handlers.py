@@ -50,6 +50,8 @@ async def return_start_menu(callback, button, manager: DialogManager):
         text="📋 Главное меню:"
     )
 
+    await manager.done()
+
 
 def make_on_selected(key: str, next_state):
     """Фабрика универсальных обработчиков выбора"""
@@ -120,3 +122,22 @@ async def info_about_bot(message: Message):
 async def choose_strategy(message: Message, dialog_manager: DialogManager):
     await dialog_manager.start(MainSG.strategies, mode=StartMode.RESET_STACK)
 
+
+@router.message(F.text == 'Выбранные стратегии')
+async def choosing_strategy(message: Message):
+    chat_id = message.chat.id
+
+    user = reports.get('users')
+
+    user_strategies = user.get(chat_id)
+
+    if not user_strategies:
+        await message.answer("У вас пока нет активных стратегий.")
+        return
+
+    text = "<b>📊 Ваши активные стратегии:</b>\n\n"
+
+    for number, strategy in enumerate(user_strategies, start=1):
+        text += f"{number}.  <b>{strategy}</b> \n"
+
+    await message.answer(text, parse_mode="HTML")
