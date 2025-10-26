@@ -11,7 +11,8 @@ from aiogram_dialog import Dialog, setup_dialogs
 from dotenv import dotenv_values
 from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
-    window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
+    window_start, window_disclaimer, window_strategy, window_coins,
+    window_alarm_times, window_ack_strategy, window_confirmation, window_remove_strategies, window_removed_strategies
 )
 from api import delete_user
 from telegram.handlers import reports
@@ -24,7 +25,15 @@ BOT_TOKEN = config.get("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 
 dialog = Dialog(
-    window_start, window_disclaimer, window_strategy, window_coins, window_alarm_times, window_ack_strategy, window_confirmation
+    window_start,
+    window_disclaimer,
+    window_strategy,
+    window_coins,
+    window_alarm_times,
+    window_ack_strategy,
+    window_confirmation,
+    window_remove_strategies,
+    window_removed_strategies
 )
 
 bad_chat_ids = []
