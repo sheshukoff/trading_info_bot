@@ -140,7 +140,7 @@ window_remove_strategies = Window(
 window_removed_strategies = Window(
     Format("{removed_text}"),
     Column(
-        Next(Const("⬅️ Назад в меню"), id='to_menu', on_click=return_start_menu),
+        Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
     ),
     state=MainSG.ack_remove_strategies,
     getter=get_removed_strategies
