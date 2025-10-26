@@ -27,3 +27,15 @@ async def delete_user(telegram_id: int):
     response = requests.delete(end_point, json=body, headers=HEADERS)
     await asyncio.sleep(0.1)
     return response.json()['id']
+
+
+async def user_strategies(telegram_id: int):
+    params = {
+        "telegram_id": telegram_id
+    }
+
+    end_point = f'{URL}/strategies'
+    response = requests.get(end_point, params=params, headers=HEADERS)
+    print(response.json())
+    await asyncio.sleep(0.1)
+    return response.json()['strategies']
