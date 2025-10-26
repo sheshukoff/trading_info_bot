@@ -6,6 +6,8 @@ class MainSG(StatesGroup):
     disclaimer = State()
     guide = State()
     strategies = State()
+    remove_strategies = State()
+    ack_remove_strategies = State()
     coins = State()
     alarm_times = State()
     ack_strategy = State()
