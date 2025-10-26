@@ -2,6 +2,12 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
 import connection_oracle.queries_to_oracle as oracle
+from telegram.handlers import reports
+
+
+class NewBook(BaseModel):
+    title: str
+    author: str
 
 
 class NewUser(BaseModel):
@@ -11,6 +17,10 @@ class NewUser(BaseModel):
 
 class DeleteUser(BaseModel):
     telegram_id: int
+
+
+class StrategiesUser(BaseModel):
+    chat_id: int
 
 
 app = FastAPI()
@@ -40,6 +50,28 @@ async def delete_user(delete_user: DeleteUser):
             'id': result,
             'telegram_id': delete_user.telegram_id,
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get('/strategies', tags=['Стратегии'], summary='Получить стратегии пользователя')
+async def get_strategies_user(telegram_id):
+    try:
+        user = reports.get('users')
+        user_strategies = user.get(telegram_id)
+
+        if not user_strategies:
+            pass  # здесь будет функция для бд (Достанет все стратегии пользоваля)
+
+        if not user_strategies:
+            return {"success": True, "strategies": [], "message": "У вас пока нет активных стратегий."}
+
+        return {
+            "success": True,
+            "telegram_id": telegram_id,
+            "strategies": user_strategies
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
