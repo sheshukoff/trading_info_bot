@@ -6,12 +6,8 @@ from aiogram.types import CallbackQuery, Message
 from telegram.app.keyboards import main_menu
 from telegram.states import MainSG
 from rmq.consumer import send_to_queue
-from telegram.api import add_user, user_strategies
-
-reports = {
-    "users": {},
-    "strategies": {}
-}
+import telegram.api as tg_api
+from reports.reports import reports
 
 router = Router()
 
@@ -31,7 +27,7 @@ async def on_start_menu(callback, button, manager: DialogManager):
         chat_id = manager.event.from_user.id
         user_name = manager.event.from_user.username or f"user_{chat_id}"
 
-    await add_user(chat_id, user_name)
+    await tg_api.add_user(chat_id, user_name)
     await manager.event.bot.send_message(
         chat_id=chat_id,
         text="📋 Главное меню:",
@@ -88,7 +84,7 @@ async def selected_data_value(dialog_manager, key):
 async def on_choose_strategy(c, b, manager: DialogManager):
     # собираем выбранные данные
     strategy = await selected_data_value(manager, "strategies")
-    coins = await selected_data_value(manager, "coins")
+    coin = await selected_data_value(manager, "coins")
     timeframe = await selected_data_value(manager, "alarm_times")
 
     if manager.event.message:
@@ -96,49 +92,30 @@ async def on_choose_strategy(c, b, manager: DialogManager):
     else:
         chat_id = manager.event.from_user.id
 
-    users = reports.get('users')
-    if chat_id not in users:
-        users[chat_id] = [f'{strategy} {coins} {timeframe}']
+    user_strategy = f'{strategy} {coin} {timeframe}'
+    user_strategy_exists = await check_user_strategy(chat_id, user_strategy)
+
+    if user_strategy_exists:
+        await manager.switch_to(MainSG.repeat_strategy)
+        return
     else:
-        users[chat_id].append(f'{strategy} {coins} {timeframe}')
-
-    strategies = reports.get('strategies')
-    if f'{strategy} {coins} {timeframe}' not in strategies:
-        strategies[f'{strategy} {coins} {timeframe}'] = [chat_id]
-    else:
-        strategies[f'{strategy} {coins} {timeframe}'].append(chat_id)
-
-    await send_to_queue(strategy, coins, timeframe, chat_id, 'test')  # кладем в RabbitMQ
-
-    await manager.switch_to(MainSG.summary)
+        reports.add_user_strategy(chat_id, strategy, coin, timeframe)
+        await send_to_queue(strategy, coin, timeframe, chat_id, 'test')  # кладем в RabbitMQ
+        await manager.switch_to(MainSG.summary)
 
 
-async def on_remove_strategies(c, widget, manager: DialogManager):
-    chat_id = manager.event.from_user.id
-    selected = manager.find("remove_strategies").get_checked()  # список выбранных
+async def check_user_strategy(chat_id, strategy):
+    user_strategies = reports.get_user_strategies(chat_id)
 
-    user = reports.get('users') or {}
-    strategies = user.get(chat_id, [])
-
-    # фильтруем стратегии — убираем выбранные
-    new_strategies = [s for s in strategies if s not in selected]
-    user[chat_id] = new_strategies
-
-    # сохраняем обратно
-    reports['users'] = user
-
-    # передаём в контекст, чтобы показать на следующем окне
-    manager.dialog_data["removed_strategies"] = selected
-
-    # переходим к следующему окну
-    await manager.switch_to(MainSG.ack_remove_strategies)
+    if strategy in user_strategies:
+        return True
+    return False
 
 
 async def get_user_strategies(dialog_manager: DialogManager, **kwargs):
     chat_id = dialog_manager.event.from_user.id
 
-    user = reports.get('users') or {}
-    user_strategies = user.get(chat_id, [])
+    user_strategies = reports.get_user_strategies(chat_id)
 
     if not user_strategies:
         user_strategies = ["Нет доступных стратегий"]
@@ -146,13 +123,40 @@ async def get_user_strategies(dialog_manager: DialogManager, **kwargs):
     return {"remove_strategies": user_strategies}
 
 
-async def get_removed_strategies(dialog_manager: DialogManager, **kwargs):
-    removed = dialog_manager.dialog_data.get("removed_strategies", [])
-    if not removed:
-        text = "Вы не удалили ни одной стратегии."
+async def on_remove_strategies(c, b, manager: DialogManager):
+    if manager.event.message:
+        chat_id = manager.event.message.chat.id
     else:
-        text = "Вы удалили следующие стратегии:\n\n" + "\n".join(f"• {s}" for s in removed)
-    return {"removed_text": text}
+        chat_id = manager.event.from_user.id
+
+    # Получаем выбранные значения из мультиселекта напрямую
+    widget = manager.find("remove_strategies")
+    selected_strategies = widget.get_checked()
+
+    print(f"Выбранные опции: {selected_strategies}")
+
+    # Удаление стратегий пользователя из объекта reports
+    for strategy in selected_strategies:
+        reports.remove_user_strategy(chat_id, strategy)
+        await reports.check_strategy(chat_id, strategy)
+
+    # Сохраняем в dialog_data для передачи на следующий экран
+    manager.dialog_data["selected"] = selected_strategies
+    await manager.switch_to(MainSG.ack_remove_strategies)
+
+
+async def get_removed_strategies(dialog_manager: DialogManager, **kwargs):
+    selected_strategies = dialog_manager.dialog_data.get("selected", [])
+
+    if not selected_strategies:
+        return {"selected": "Вы не удалили не одной стратегии ❌"}
+
+    text = ''
+
+    for number, strategy in enumerate(selected_strategies, start=1):
+        text += f"{number}. <b>{strategy}</b>\n"
+
+    return {"selected": text}
 
 
 @router.message(F.text == 'Информация о боте')
@@ -168,7 +172,7 @@ async def choose_strategy(message: Message, dialog_manager: DialogManager):
 @router.message(F.text == 'Выбранные стратегии')
 async def choosing_strategy(message: Message):
     chat_id = message.chat.id
-    list_strategies = await user_strategies(chat_id)
+    list_strategies = await tg_api.user_strategies(chat_id)
 
     text = "<b>📊 Ваши активные стратегии:</b>\n\n"
 
