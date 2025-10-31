@@ -12,7 +12,8 @@ from dotenv import dotenv_values
 from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins,
-    window_alarm_times, window_ack_strategy, window_confirmation, window_remove_strategies, window_removed_strategies
+    window_alarm_times, window_ack_strategy, window_confirmation,
+    window_remove_strategies, window_ack_remove_strategies, window_repeat_strategy
 )
 from api import delete_user
 from telegram.handlers import reports
@@ -33,7 +34,8 @@ dialog = Dialog(
     window_ack_strategy,
     window_confirmation,
     window_remove_strategies,
-    window_removed_strategies
+    window_ack_remove_strategies,
+    window_repeat_strategy
 )
 
 bad_chat_ids = []
@@ -70,9 +72,7 @@ async def unpacking_message(message: json) -> tuple:
     notification = result.get('message')  # сам отчет
     report = result.get('report')  # по чем отчет
 
-    strategies = reports.get('strategies')
-
-    chat_ids = strategies.get(report)
+    chat_ids = reports.get_strategy_users(report)
 
     return notification, report, chat_ids
 
@@ -90,14 +90,16 @@ async def return_message():
                     async for chat_id in iterate_chat_ids(chat_ids):
                         await send_message(chat_id, notification, report)
 
-                strategies = reports.get('strategies')
-                chat_ids = strategies.get(report)
+                chat_ids = reports.get_strategy_users(report)
+                print('чаты id', chat_ids)
 
                 await unnecessary_chat_id(bad_chat_ids, chat_ids)
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)
-                print(strategies.get(report), 'должен оказаться пустым после блокировки бота')
+                print(reports.get_strategy_users(report), 'должен оказаться пустым после блокировки бота')
+
+                # После того как список остался пустым нужно остановить task планировщик
     except Exception as error:
         print(error)
 
