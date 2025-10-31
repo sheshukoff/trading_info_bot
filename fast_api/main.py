@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
 import connection_oracle.queries_to_oracle as oracle
+from reports.reports import reports
 
 
 class NewBook(BaseModel):
@@ -18,49 +19,11 @@ class DeleteUser(BaseModel):
     telegram_id: int
 
 
+class StrategiesUser(BaseModel):
+    chat_id: int
+
+
 app = FastAPI()
-
-books = [
-    {
-        'id': 1,
-        'title': 'Солнце мертвых',
-        'author': 'И. Шмелёв',
-    },
-    {
-        'id': 2,
-        'title': 'Вишневый сад',
-        'author': 'А. Чехов',
-    }
-]
-
-
-@app.get('/books', tags=['Книги'], summary='Получить все книги')
-def read_books():
-    return books
-
-
-@app.get('/books{book_id}', tags=['Книги'], summary='Получить одну книгу')
-def get_book(book_id: int):
-    for book in books:
-        if book['id'] == book_id:
-            return book
-        raise HTTPException(status_code=404, detail='Книга не найдена')
-
-
-@app.get('/new_books', tags=['Книги'], summary='Получить все книги')
-def new_read_books():
-    return books
-
-
-@app.post('/new_book', tags=['Книги'])
-def create_book(new_book: NewBook):
-    books.append({
-        'id': len(books) + 1,
-        'title': new_book.title,
-        'author': new_book.author
-    })
-    # add_user(8343423342, 'telegram_name')
-    return {'success': True, 'message': 'Пользователь успешно добавлен'}
 
 
 @app.post('/users', tags=['Пользователи'], summary='Довабить пользователя')
@@ -91,11 +54,39 @@ async def delete_user(delete_user: DeleteUser):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get('/strategies', tags=['Стратегии'], summary='Получить стратегии пользователя')
+async def get_strategies_user(telegram_id):
+    try:
+        user_strategies = reports.get_user_strategies(telegram_id)
+        print('fast_api', user_strategies)
+
+        if not user_strategies:
+            pass  # здесь будет функция для бд (Достанет все стратегии пользоваля)
+
+        if not user_strategies:
+            return {"success": True, "strategies": [], "message": "У вас пока нет активных стратегий."}
+
+        return {
+            "success": True,
+            "telegram_id": telegram_id,
+            "strategies": user_strategies
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post('/strategies', tags=['Стратегии'], summary='Добавить стратегию пользователю')
+async def add_strategy_user(telegram_id, strategy, coin, timeframe):
+    # TODO написать пакет для добавления стратегий пользователя
+    try:
+        return {
+            'success': True,
+            'id': 'id',
+            'telegram_id': telegram_id,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True)
-
-    # books.append({
-    #     'id': len(books) + 1,
-    #     'title': new_book.title,
-    #     'author': new_book.author
-    # })
