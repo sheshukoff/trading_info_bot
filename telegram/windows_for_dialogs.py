@@ -11,7 +11,6 @@ from telegram.handlers import (
     on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data,
     on_choose_strategy, return_start_menu, get_user_strategies, on_remove_strategies, get_removed_strategies
 )
-from handlers import reports
 
 selected_strategy = selected_data("strategies", "selected_strategy")
 selected_coins = selected_data("coins", "selected_coins")
@@ -97,6 +96,18 @@ window_alarm_times = Window(
     state=MainSG.alarm_times,
 )
 
+window_repeat_strategy = Window(
+    Format("Вы уже используете эту стратегию <b>{selected_strategy} {selected_coins} {selected_alarm_times}</b>"),
+    Row(
+        Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
+        Button(Const('Выбрать заново'), id='repeat_strategy', on_click=on_add_strategy),
+    ),
+    getter=[selected_strategy, selected_coins, selected_alarm_times],
+    state=MainSG.repeat_strategy,
+    parse_mode="HTML"
+)
+
+
 window_ack_strategy = Window(
     Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
     Row(
@@ -126,22 +137,22 @@ window_remove_strategies = Window(
             items="remove_strategies",
             type_factory=str,
             item_id_getter=lambda item: item,
-            on_click=None
         ),
         width=1
     ),
     Column(
-        Next(Const("Подтвердить"), id="confirm_remove", on_click=on_remove_strategies),
+        Button(Const("Подтвердить"), id="confirm_remove", on_click=on_remove_strategies),
     ),
     state=MainSG.remove_strategies,
     getter=get_user_strategies
 )
 
-window_removed_strategies = Window(
-    Format("{removed_text}"),
+window_ack_remove_strategies = Window(
+    Format("Вы выбрали удалить следующие стратегии:\n\n{selected}"),
     Column(
-        Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
+        Button(Const('В меню'), id="confirm_delete", on_click=return_start_menu)
     ),
     state=MainSG.ack_remove_strategies,
-    getter=get_removed_strategies
+    getter=get_removed_strategies,
+    parse_mode="HTML"
 )
