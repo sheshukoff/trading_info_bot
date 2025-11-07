@@ -3,7 +3,7 @@ import aiorabbit
 import json
 
 from scheduler.work_with_console import add_task
-from connection_okx.get_data import get_data_okx
+from connection_okx.aiohttp_get_data import get_history_data_okx
 from strategies.strategies import rsi_strategy, ema_strategy
 from dotenv import dotenv_values
 
@@ -11,8 +11,8 @@ config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 strategies = {
-    "RSI 14": ("RSI 14", get_data_okx, rsi_strategy),
-    "EMA/WMA": ("EMA/WMA", get_data_okx, ema_strategy),
+    "RSI 14": ("RSI 14", get_history_data_okx, rsi_strategy),
+    "EMA/WMA": ("EMA/WMA", get_history_data_okx, ema_strategy),
 }
 
 
