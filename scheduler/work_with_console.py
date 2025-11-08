@@ -1,5 +1,5 @@
 import asyncio
-from connection_okx.get_data import get_data_okx
+from connection_okx.get_data import get_history_data_okx
 from strategies.strategies import rsi_strategy, ema_strategy
 from scheduler.scheduler import Scheduler
 
