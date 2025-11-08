@@ -6,6 +6,30 @@ from aiohttp import ClientSession, ClientResponse
 import aiohttp
 
 
+# --- Глобальная aiohttp сессия ---
+SESSION: aiohttp.ClientSession | None = None
+
+
+async def get_session() -> aiohttp.ClientSession:
+    """Возвращает активную aiohttp-сессию или создаёт новую."""
+    global SESSION
+    if SESSION is None or SESSION.closed:
+        SESSION = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30),
+            connector=aiohttp.TCPConnector(limit=100, keepalive_timeout=60)
+        )
+        print("🌐 Aiohttp session создана")
+    return SESSION
+
+
+async def close_session():
+    """Корректно закрывает aiohttp-сессию."""
+    global SESSION
+    if SESSION and not SESSION.closed:
+        await SESSION.close()
+        print("🧹 Aiohttp session закрыта")
+
+
 async def get_local_tz() -> int:
     local_tz = get_localzone()
     now = datetime.now(local_tz)
@@ -44,7 +68,8 @@ async def extrac_local_data(inst_id: str, bar: str, data_time: str, session: Cli
         return data['data']
 
 
-async def extract_history_data(inst_id: str, bar: str, session: ClientSession, limit=100) -> ClientResponse:
+async def extract_history_data(inst_id: str, bar: str, limit=100) -> ClientResponse:
+    session = await get_session()
     endpoint = '/api/v5/market/candles'
     params = {
         'instId': inst_id,
@@ -71,36 +96,34 @@ async def processing_data(data) -> pd.DataFrame:
 
 
 async def change_type_data(df):
-    df['open'] = df['open'].astype('float64')
-    df['high'] = df['high'].astype('float64')
-    df['lowest'] = df['lowest'].astype('float64')
-    df['close'] = df['close'].astype('float64')
-    df['volume'] = df['volume'].astype('float64')
-    df['volCcy'] = df['volCcy'].astype('float64')
-    df['volCcyQuote'] = df['volCcyQuote'].astype('float64')
-    df['confirm'] = df['confirm'].astype('int8')
-
+    df = df.astype({
+        'open': 'float64',
+        'high': 'float64',
+        'lowest': 'float64',
+        'close': 'float64',
+        'volume': 'float64',
+        'volCcy': 'float64',
+        'volCcyQuote': 'float64',
+        'confirm': 'int8'
+    })
     return df
 
 
 async def get_local_data_okx(coin, timeframe, new_date):
-    async with aiohttp.ClientSession() as session:
-        # new_date = str(int(datetime.strptime(df['ts'].iloc[-1], '%Y-%m-%d %H:%M:%S').timestamp() * 1000))
-        response = await extrac_local_data(coin, timeframe, new_date, session)
-        df = await processing_data(response)  # Добавление новых данных в бд
-        return df, coin, timeframe
+    # new_date = str(int(datetime.strptime(df['ts'].iloc[-1], '%Y-%m-%d %H:%M:%S').timestamp() * 1000))
+    response = await extrac_local_data(coin, timeframe, new_date, session)
+    df = await processing_data(response)  # Добавление новых данных в бд
+    return df, coin, timeframe
 
 
 async def get_history_data_okx(coin, timeframe):
-    async with aiohttp.ClientSession() as session:
-        response = await extract_history_data(coin, timeframe, session)
-        df = await processing_data(response)
-        return df, coin, timeframe
+    response = await extract_history_data(coin, timeframe)
+    df = await processing_data(response)
+    return df, coin, timeframe
 
 
 async def main():
     await get_history_data_okx('BTC-USDT', '1m')
-
 
 if __name__ == '__main__':
     asyncio.run(main())
