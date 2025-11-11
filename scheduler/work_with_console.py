@@ -1,13 +1,13 @@
 import asyncio
-from connection_okx.get_data import get_history_data_okx
+from connection_okx.get_data import get_data_okx
 from strategies.strategies import rsi_strategy, ema_strategy
 from scheduler.scheduler import Scheduler
 
 SCHEDULERS = {}
 
 strategies = {
-    1: ("RSI стратегия", get_history_data_okx, rsi_strategy),
-    2: ("EMA стратегия", get_history_data_okx, ema_strategy),
+    1: ("RSI стратегия", get_data_okx, rsi_strategy),
+    2: ("EMA стратегия", get_data_okx, ema_strategy),
 }
 
 
