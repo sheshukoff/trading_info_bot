@@ -59,15 +59,16 @@ async def processing_data(ticker: str, timeframe: str, limit=300) -> pd.DataFram
 
 
 async def change_type_data(df):
-    df['open'] = df['open'].astype('float64')
-    df['high'] = df['high'].astype('float64')
-    df['lowest'] = df['lowest'].astype('float64')
-    df['close'] = df['close'].astype('float64')
-    df['volume'] = df['volume'].astype('float64')
-    df['volCcy'] = df['volCcy'].astype('float64')
-    df['volCcyQuote'] = df['volCcyQuote'].astype('float64')
-    df['confirm'] = df['confirm'].astype('int8')
-
+    df = df.astype({
+        'open': 'float64',
+        'high': 'float64',
+        'lowest': 'float64',
+        'close': 'float64',
+        'volume': 'float64',
+        'volCcy': 'float64',
+        'volCcyQuote': 'float64',
+        'confirm': 'int8'
+    })
     return df
 
 
