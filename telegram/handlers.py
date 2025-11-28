@@ -177,9 +177,16 @@ async def choosing_strategy(message: Message):
     text = "<b>📊 Ваши активные стратегии:</b>\n\n"
 
     if list_strategies:
-        text += list_strategies
-        # for number, strategy in enumerate(list_strategies, start=1):
-        #     text += f"{number}.  <b>{strategy}</b>\n"
+        for i, item in enumerate(list_strategies.split('\n'), 1):
+            parts = item.split()
+            name = " ".join(parts[:-2])
+            symbol = parts[-2]
+            tf = parts[-1]
+
+            text += (
+                f"{i}. 📌 <b>{name}</b>\n"
+                f"     💱 <b>{symbol}</b> — <b>{tf}</b>\n\n"
+            )
 
         await message.answer(text, parse_mode="HTML")
     else:
@@ -189,3 +196,5 @@ async def choosing_strategy(message: Message):
 @router.message(F.text == 'Удалить стратегию')
 async def remove_strategy(message: Message, dialog_manager: DialogManager):
     await dialog_manager.start(MainSG.remove_strategies, mode=StartMode.RESET_STACK)
+
+
