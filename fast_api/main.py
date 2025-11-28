@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
-import connection_oracle.queries_to_oracle as oracle
+import connection_oracle.delete_queries as delete_oracle
+import connection_oracle.insert_queries as insert_oracle
+import connection_oracle.get_queries as get_oracle
 from telegram.handlers import reports
 
 
@@ -19,17 +21,13 @@ class DeleteUser(BaseModel):
     telegram_id: int
 
 
-class StrategiesUser(BaseModel):
-    chat_id: int
-
-
 app = FastAPI()
 
 
 @app.post('/users', tags=['Пользователи'], summary='Довабить пользователя')
 async def create_user(new_user: NewUser):
     try:
-        result = await oracle.add_user(new_user.telegram_id, new_user.telegram_name)
+        result = await insert_oracle.insert_user(new_user.telegram_id, new_user.telegram_name)
         return {
             'success': True,
             'id': result,
@@ -43,7 +41,7 @@ async def create_user(new_user: NewUser):
 @app.delete('/users', tags=['Пользователи'], summary='Удалить пользователя')
 async def delete_user(delete_user: DeleteUser):
     try:
-        result = await oracle.delete_user(delete_user.telegram_id)
+        result = await delete_oracle.delete_user(delete_user.telegram_id)
 
         return {
             'success': True,
@@ -55,21 +53,17 @@ async def delete_user(delete_user: DeleteUser):
 
 
 @app.get('/strategies', tags=['Стратегии'], summary='Получить стратегии пользователя')
-async def get_strategies_user(telegram_id):
+async def get_strategies_user(telegram_id: int):
     try:
-        user = reports.get('users')
-        user_strategies = user.get(telegram_id)
+        result = await get_oracle.get_user_strategies(telegram_id)
 
-        if not user_strategies:
-            pass  # здесь будет функция для бд (Достанет все стратегии пользоваля)
-
-        if not user_strategies:
-            return {"success": True, "strategies": [], "message": "У вас пока нет активных стратегий."}
+        if not result:
+            return {"success": False, "strategies": [], "message": "У вас пока нет активных стратегий."}
 
         return {
             "success": True,
             "telegram_id": telegram_id,
-            "strategies": user_strategies
+            "strategies": result
         }
 
     except Exception as e:
