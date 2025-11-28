@@ -177,8 +177,9 @@ async def choosing_strategy(message: Message):
     text = "<b>📊 Ваши активные стратегии:</b>\n\n"
 
     if list_strategies:
-        for number, strategy in enumerate(list_strategies, start=1):
-            text += f"{number}.  <b>{strategy}</b>\n"
+        text += list_strategies
+        # for number, strategy in enumerate(list_strategies, start=1):
+        #     text += f"{number}.  <b>{strategy}</b>\n"
 
         await message.answer(text, parse_mode="HTML")
     else:
