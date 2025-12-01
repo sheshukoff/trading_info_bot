@@ -2,8 +2,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 from tzlocal import get_localzone
 import asyncio
-from aiohttp import ClientSession, ClientResponse
+from aiohttp import ClientResponse
 import aiohttp
+from connection_oracle.get_queries import get_last_date
 
 
 # --- Глобальная aiohttp сессия ---
@@ -85,35 +86,38 @@ async def extract_history_data(inst_id: str, bar: str, limit=100) -> ClientRespo
 
 
 async def processing_data(data) -> pd.DataFrame:
-    columns = ['ts', 'open', 'high', 'lowest', 'close', 'volume', 'volCcy', 'volCcyQuote', 'confirm']
+    columns = ['TIMEFRAME',	'OPEN',	'HIGH', 'LOW', 'CLOSE',	'VOLUME', 'VOL_CCY', 'VOL_CCY_QUOTE', 'CONFIRM']
     df = pd.DataFrame(data, columns=columns)
 
-    df['ts'] = pd.to_datetime(pd.to_numeric(df['ts']), unit="ms") + pd.Timedelta(hours=await get_local_tz())
+    df['TIMEFRAME'] = pd.to_datetime(pd.to_numeric(df['TIMEFRAME']), unit="ms") + pd.Timedelta(hours=await get_local_tz())
 
     df = await change_type_data(df)
-    df.sort_values(by='ts', inplace=True)
+    df.sort_values(by='TIMEFRAME', inplace=True)
 
     return df.head(-1)
 
 
 async def change_type_data(df):
     df = df.astype({
-        'open': 'float64',
-        'high': 'float64',
-        'lowest': 'float64',
-        'close': 'float64',
-        'volume': 'float64',
-        'volCcy': 'float64',
-        'volCcyQuote': 'float64',
-        'confirm': 'int8'
+        'OPEN': 'float64',
+        'HIGH': 'float64',
+        'LOW': 'float64',
+        'CLOSE': 'float64',
+        'VOLUME': 'float64',
+        'VOL_CCY': 'float64',
+        'VOL_CCY_QUOTE': 'float64',
+        'CONFIRM': 'int8'
     })
     return df
 
 
-async def get_local_data_okx(coin, timeframe, new_date):
-    # new_date = str(int(datetime.strptime(df['ts'].iloc[-1], '%Y-%m-%d %H:%M:%S').timestamp() * 1000))
-    response = await extrac_local_data(coin, timeframe, new_date, session)
+async def get_local_data_okx(coin, timeframe):
+    last_date = await get_last_date(coin, timeframe)
+    new_date = str(int(datetime.strptime(last_date, '%Y-%m-%d %H:%M:%S').timestamp() * 1000))
+    print(last_date, new_date)
+    response = await extrac_local_data(coin, timeframe, new_date)
     df = await processing_data(response)  # Добавление новых данных в бд
+    print(df)
     return df, coin, timeframe
 
 
@@ -125,7 +129,7 @@ async def get_history_data_okx(coin, timeframe):
 
 
 async def main():
-    await get_history_data_okx('BTC-USDT', '1m')
-
+    # await get_history_data_okx('BTC-USDT', '1m')
+    await get_local_data_okx('BTC-USDT', '1m')
 if __name__ == '__main__':
     asyncio.run(main())
