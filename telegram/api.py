@@ -67,7 +67,7 @@ async def delete_job(job_id):
     return response.json()['job_id']
 
 
-async def change_load_function(load_function, ticker, timeframe):
+async def change_job(load_function, ticker, timeframe):
     body = {
         "load_function": load_function,
         "ticker": ticker,
