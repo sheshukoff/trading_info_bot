@@ -39,3 +39,42 @@ async def user_strategies(telegram_id: int):
     print(response.json())
     await asyncio.sleep(0.1)
     return response.json()['strategies']
+
+
+async def add_job(load_function, ticker, timeframe):
+    body = {
+        "load_function": load_function,
+        "ticker": ticker,
+        "timeframe": timeframe
+    }
+
+    end_point = f'{URL}/add_job'
+
+    response = requests.post(end_point, json=body, headers=HEADERS)
+    print(response.json())
+    await asyncio.sleep(0.1)
+    return response.json()['ticker']
+
+
+async def delete_job(job_id):
+    body = {
+        "job_id": job_id
+    }
+
+    end_point = f'{URL}/remove_job'
+    response = requests.delete(end_point, json=body, headers=HEADERS)
+    await asyncio.sleep(0.1)
+    return response.json()['job_id']
+
+
+async def change_load_function(load_function, ticker, timeframe):
+    body = {
+        "load_function": load_function,
+        "ticker": ticker,
+        "timeframe": timeframe
+    }
+
+    end_point = f'{URL}/change_load_function'
+    response = requests.put(end_point, json=body, headers=HEADERS)
+    await asyncio.sleep(0.1)
+    return response.json()['ticker']
