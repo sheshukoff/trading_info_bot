@@ -4,7 +4,7 @@ from tzlocal import get_localzone
 import asyncio
 from aiohttp import ClientResponse
 import aiohttp
-from connection_oracle.get_queries import get_last_date
+from connection_oracle.get_queries import get_last_date, exists_ticker_and_timeframe
 
 
 # --- Глобальная aiohttp сессия ---
@@ -128,8 +128,19 @@ async def get_history_data_okx(coin, timeframe):
     return df, coin, timeframe
 
 
+async def get_data_okx(coin, timeframe):
+    if await exists_ticker_and_timeframe(coin, timeframe):
+        df, coin, timeframe = await get_local_data_okx(coin, timeframe)
+        return df, coin, timeframe
+
+    df, coin, timeframe = await get_history_data_okx(coin, timeframe)
+    return df, coin, timeframe
+
+
 async def main():
     # await get_history_data_okx('BTC-USDT', '1m')
-    await get_local_data_okx('BTC-USDT', '1m')
+    await get_data_okx('BTC-USDT', '1m')
+
+
 if __name__ == '__main__':
     asyncio.run(main())
