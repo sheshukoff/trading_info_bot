@@ -2,8 +2,7 @@ import asyncio
 import aiorabbit
 import json
 
-from scheduler.work_with_console import add_task
-from connection_okx.get_data import get_data_okx
+from telegram.api import add_job
 from strategies.strategies import rsi_strategy, ema_strategy
 from dotenv import dotenv_values
 
@@ -11,8 +10,8 @@ config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 strategies = {
-    "RSI 14": ("RSI 14", get_data_okx, rsi_strategy),
-    "EMA/WMA": ("EMA/WMA", get_data_okx, ema_strategy),
+    "RSI 14": ("RSI 14", 'get_data_okx', rsi_strategy),
+    "EMA/WMA": ("EMA/WMA", 'get_data_okx', ema_strategy),
 }
 
 
@@ -57,7 +56,7 @@ async def consume_message():
                 strategy_name, load_function, strategy_function = strategies[strategy]
                 print(strategy_name, load_function, strategy_function)
 
-                await add_task(load_function, strategy_function, coin, timeframe=timeframe, strategy_name=strategy_name)
+                await add_job(load_function, coin, timeframe)
 
                 if message.delivery_tag:
                     await client.basic_ack(message.delivery_tag)  # Сообщения которые прочел пользователь
