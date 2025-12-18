@@ -6,14 +6,13 @@ import connection_oracle.delete_queries as delete_oracle
 import connection_oracle.insert_queries as insert_oracle
 import connection_oracle.get_queries as get_oracle
 from scheduler.scheduler import DynamicSchedulerManager
-from connection_okx.aiohttp_get_data import get_history_data_okx, get_local_data_okx
+from connection_okx.aiohttp_get_data import get_data_okx
 
 
 scheduler = DynamicSchedulerManager()
 
 AVAILABLE_FUNCTIONS = {
-    "get_history_data_okx": get_history_data_okx,
-    "get_local_data_okx": get_local_data_okx
+    "get_data_okx": get_data_okx
 }
 
 
