@@ -5,6 +5,8 @@ import asyncio
 from aiohttp import ClientResponse
 import aiohttp
 from connection_oracle.get_queries import get_last_date, exists_ticker_and_timeframe
+from connection_oracle.insert_queries import insert_okx_data
+from connection_oracle.connection_oracle_db import engine
 
 
 # --- Глобальная aiohttp сессия ---
@@ -131,9 +133,13 @@ async def get_history_data_okx(coin, timeframe):
 async def get_data_okx(coin, timeframe):
     if await exists_ticker_and_timeframe(coin, timeframe):
         df, coin, timeframe = await get_local_data_okx(coin, timeframe)
+
+        await insert_okx_data(df, engine, coin, timeframe)
         return df, coin, timeframe
 
     df, coin, timeframe = await get_history_data_okx(coin, timeframe)
+    await insert_okx_data(df, engine, coin, timeframe)
+
     return df, coin, timeframe
 
 
