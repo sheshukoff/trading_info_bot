@@ -13,10 +13,11 @@ from telegram.handlers import router, start
 from telegram.windows_for_dialogs import (
     window_start, window_disclaimer, window_strategy, window_coins,
     window_alarm_times, window_ack_strategy, window_confirmation,
-    window_remove_strategies, window_ack_remove_strategies, window_repeat_strategy
+    window_remove_strategies, window_ack_remove_strategies, window_repeat_strategy, window_strategy_limit
 )
 from api import delete_user
 from telegram.handlers import reports
+from connection_oracle.delete_queries import delete_user_all_strategies
 
 config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
@@ -35,7 +36,8 @@ dialog = Dialog(
     window_confirmation,
     window_remove_strategies,
     window_ack_remove_strategies,
-    window_repeat_strategy
+    window_repeat_strategy,
+    window_strategy_limit
 )
 
 bad_chat_ids = []
@@ -60,10 +62,12 @@ async def send_message(chat_id: int, notification: str, report: str):
         print(f"Пользователь c чатом id {chat_id} заблокировал бота.")
         bad_chat_ids.append(chat_id)
         await delete_user(chat_id)
+        await delete_user_all_strategies(chat_id)
     except TelegramNotFound:
         print(f"Пользователь c чатом id {chat_id} не найден (удалён или не писал боту)")
         bad_chat_ids.append(chat_id)
         await delete_user(chat_id)
+        await delete_user_all_strategies(chat_id)
 
 
 async def unpacking_message(message: json) -> tuple:

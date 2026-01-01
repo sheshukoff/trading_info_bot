@@ -2,11 +2,10 @@ from aiogram_dialog import Window
 from aiogram_dialog.widgets.kbd import (Button, Group, Next, Row, Checkbox, Select, ScrollingGroup,
                                         Multiselect, Column, Back)
 from aiogram_dialog.widgets.text import Const, Format
-import operator
 
 from telegram.states import MainSG
 from telegram.messages_for_dialog import start_comand_text, disclaimer_text
-from telegram.data_for_dialog import get_strategies_data, get_coins_data, get_alarm_times_data
+from telegram.data_for_dialog import get_strategies_data, get_coins_data, get_alarm_times_data, get_max_strategy_user
 from telegram.handlers import (
     on_agree_changed, on_start_menu, on_add_strategy, make_on_selected, selected_data,
     on_choose_strategy, return_start_menu, get_user_strategies, on_remove_strategies, get_removed_strategies
@@ -126,6 +125,24 @@ window_confirmation = Window(
     getter=[selected_strategy, selected_coins, selected_alarm_times],
     state=MainSG.summary,
 )
+
+
+window_strategy_limit = Window(
+    Format(
+        "🚫 <b>Достигнут лимит стратегий</b>\n\n"
+        "📊 <b>Активных стратегий:</b> <b>{limit}</b>\n\n"
+        "➕ <b>Чтобы добавить новую стратегию:</b>\n"
+        "• удалите одну из текущих\n"
+        "• или увеличьте лимит, оформив подписку 💎\n"
+    ),
+    Row(
+        Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
+    ),
+    getter=get_max_strategy_user,
+    state=MainSG.check_max_strategy,
+    parse_mode="HTML"
+)
+
 
 window_remove_strategies = Window(
     Format("Вы можите удалить одну или сразу несколько стратегий"),

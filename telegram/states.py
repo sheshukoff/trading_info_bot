@@ -9,6 +9,7 @@ class MainSG(StatesGroup):
     alarm_times = State()
     ack_strategy = State()
     repeat_strategy = State()
+    check_max_strategy = State()
     summary = State()
     remove_strategies = State()
     ack_remove_strategies = State()

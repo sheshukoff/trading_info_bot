@@ -8,6 +8,10 @@ from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 import telegram.api as tg_api
 from reports.reports import reports
+from connection_oracle.insert_queries import insert_using_strategy
+from connection_oracle.delete_queries import delete_user_strategy
+from connection_oracle.get_queries import get_quantity_strategy_user
+
 
 router = Router()
 
@@ -93,15 +97,23 @@ async def on_choose_strategy(c, b, manager: DialogManager):
         chat_id = manager.event.from_user.id
 
     user_strategy = f'{strategy} {coin} {timeframe}'
+
     user_strategy_exists = await check_user_strategy(chat_id, user_strategy)
+    user_strategy_limit = await get_quantity_strategy_user(chat_id)
+    print(user_strategy_limit, len(reports.get_user_strategies(chat_id)))
+
+    if len(reports.get_user_strategies(chat_id)) >= user_strategy_limit:
+        await manager.switch_to(MainSG.check_max_strategy)
+        return
 
     if user_strategy_exists:
         await manager.switch_to(MainSG.repeat_strategy)
         return
-    else:
-        reports.add_user_strategy(chat_id, strategy, coin, timeframe)
-        await send_to_queue(strategy, coin, timeframe, chat_id, 'test')  # кладем в RabbitMQ
-        await manager.switch_to(MainSG.summary)
+
+    reports.add_user_strategy(chat_id, strategy, coin, timeframe)
+    await insert_using_strategy(chat_id, strategy, coin, timeframe)
+    await send_to_queue(strategy, coin, timeframe, chat_id, 'test')  # кладем в RabbitMQ
+    await manager.switch_to(MainSG.summary)
 
 
 async def check_user_strategy(chat_id, strategy):
@@ -137,8 +149,10 @@ async def on_remove_strategies(c, b, manager: DialogManager):
 
     # Удаление стратегий пользователя из объекта reports
     for strategy in selected_strategies:
+        strategy_id, ticker_id, alarm_time_id = strategy.split()
+        await delete_user_strategy(chat_id, strategy_id, ticker_id, alarm_time_id)
         reports.remove_user_strategy(chat_id, strategy)
-        await reports.check_strategy(chat_id, strategy)
+        await reports.check_strategy(chat_id, strategy)  # Здесь будет остановка планировщика
 
     # Сохраняем в dialog_data для передачи на следующий экран
     manager.dialog_data["selected"] = selected_strategies
@@ -196,5 +210,3 @@ async def choosing_strategy(message: Message):
 @router.message(F.text == 'Удалить стратегию')
 async def remove_strategy(message: Message, dialog_manager: DialogManager):
     await dialog_manager.start(MainSG.remove_strategies, mode=StartMode.RESET_STACK)
-
-
