@@ -130,7 +130,7 @@ async def get_user_strategies(dialog_manager: DialogManager, **kwargs):
     user_strategies = reports.get_user_strategies(chat_id)
 
     if not user_strategies:
-        user_strategies = ["Нет доступных стратегий"]
+        return {"remove_strategies": user_strategies}
 
     return {"remove_strategies": user_strategies}
 
