@@ -35,10 +35,22 @@ class RemoveJob(BaseModel):
     job_id: str
 
 
-class UpdateFunction(BaseModel):
-    new_load_function: str
+class InsertUsingStrategy(BaseModel):
+    telegram_id: int
+    strategy: str
     ticker: str
-    timeframe: str
+    alarm_time: str
+
+
+class DeleteUsingStrategy(BaseModel):
+    telegram_id: int
+    strategy: str
+    ticker: str
+    alarm_time: str
+
+
+class DeleteUserAllStrategies(BaseModel):
+    telegram_id: int
 
 
 @asynccontextmanager
@@ -128,23 +140,58 @@ async def delete_job(remove_job: RemoveJob):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.put('/change_load_function', tags=['Работа'], summary='Изменить планировщику функцию выгрузки данных')
-async def change_load_function(update_function: UpdateFunction):
+@app.post('/using_strategy', tags=['Используемые стратегии'], summary='Довабить стратегию пользователю')
+async def create_using_strategy(add_us: InsertUsingStrategy):
     try:
-        if update_function.new_load_function not in AVAILABLE_FUNCTIONS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Функция '{update_function.new_load_function}' не найдена"
-            )
-
-        new_load_function = AVAILABLE_FUNCTIONS[update_function.new_load_function]
-        scheduler.change_load_function(new_load_function, update_function.ticker, update_function.timeframe)
+        result = await insert_oracle.insert_using_strategy(
+            add_us.telegram_id, add_us.strategy, add_us.ticker, add_us.alarm_time
+        )
 
         return {
-            'success': True,
-            'new_load_function': update_function.new_load_function,
-            'ticker': update_function.ticker,
-            'timeframe': update_function.timeframe
+            "success": True,
+            "telegram_id": add_us.telegram_id,
+            "strategy": add_us.strategy,
+            "ticker": add_us.ticker,
+            "alarm_time": add_us.alarm_time,
+            "strategies": result
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete('/using_strategy', tags=['Используемые стратегии'], summary='Удалить используемую стратегию')
+async def delete_using_strategy(remove_strategy: DeleteUsingStrategy):
+    try:
+        result = await delete_oracle.delete_user_strategy(
+            remove_strategy.telegram_id,
+            remove_strategy.strategy,
+            remove_strategy.ticker,
+            remove_strategy.alarm_time
+        )
+
+        return {
+            "success": True,
+            "telegram_id": remove_strategy.telegram_id,
+            "strategy": remove_strategy.strategy,
+            "ticker": remove_strategy.ticker,
+            "alarm_time": remove_strategy.alarm_time,
+            "strategies": result
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete('/using_strategy', tags=['Используемые стратегии'], summary='Удалить все стратегии пользователя')
+async def delete_all_using_strategy(remove_all_strategy: DeleteUserAllStrategies):
+    try:
+        result = delete_oracle.delete_user_all_strategies(remove_all_strategy.telegram_id)
+
+        return {
+            "success": True,
+            "telegram_id": remove_all_strategy.telegram_id,
+            "strategies": result
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
