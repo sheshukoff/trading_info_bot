@@ -39,14 +39,14 @@ class InsertUsingStrategy(BaseModel):
     telegram_id: int
     strategy: str
     ticker: str
-    alarm_time: str
+    timeframe: str
 
 
 class DeleteUsingStrategy(BaseModel):
     telegram_id: int
     strategy: str
     ticker: str
-    alarm_time: str
+    timeframe: str
 
 
 class DeleteUserAllStrategies(BaseModel):
@@ -144,7 +144,7 @@ async def delete_job(remove_job: RemoveJob):
 async def create_using_strategy(add_us: InsertUsingStrategy):
     try:
         result = await insert_oracle.insert_using_strategy(
-            add_us.telegram_id, add_us.strategy, add_us.ticker, add_us.alarm_time
+            add_us.telegram_id, add_us.strategy, add_us.ticker, add_us.timeframe
         )
 
         return {
@@ -152,7 +152,7 @@ async def create_using_strategy(add_us: InsertUsingStrategy):
             "telegram_id": add_us.telegram_id,
             "strategy": add_us.strategy,
             "ticker": add_us.ticker,
-            "alarm_time": add_us.alarm_time,
+            "timeframe": add_us.timeframe,
             "strategies": result
         }
 
@@ -167,7 +167,7 @@ async def delete_using_strategy(remove_strategy: DeleteUsingStrategy):
             remove_strategy.telegram_id,
             remove_strategy.strategy,
             remove_strategy.ticker,
-            remove_strategy.alarm_time
+            remove_strategy.timeframe
         )
 
         return {
@@ -175,7 +175,7 @@ async def delete_using_strategy(remove_strategy: DeleteUsingStrategy):
             "telegram_id": remove_strategy.telegram_id,
             "strategy": remove_strategy.strategy,
             "ticker": remove_strategy.ticker,
-            "alarm_time": remove_strategy.alarm_time,
+            "timeframe": remove_strategy.timeframe,
             "strategies": result
         }
 
