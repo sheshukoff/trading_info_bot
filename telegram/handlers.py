@@ -8,8 +8,6 @@ from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 import telegram.api as tg_api
 from reports.reports import reports
-from connection_oracle.insert_queries import insert_using_strategy
-from connection_oracle.delete_queries import delete_user_strategy
 from connection_oracle.get_queries import get_quantity_strategy_user
 
 
@@ -111,7 +109,7 @@ async def on_choose_strategy(c, b, manager: DialogManager):
         return
 
     reports.add_user_strategy(chat_id, strategy, coin, timeframe)
-    await insert_using_strategy(chat_id, strategy, coin, timeframe)
+    await tg_api.add_user_strategy(chat_id, strategy, coin, timeframe)
     await send_to_queue(strategy, coin, timeframe, chat_id, 'test')  # кладем в RabbitMQ
     await manager.switch_to(MainSG.summary)
 
@@ -150,7 +148,7 @@ async def on_remove_strategies(c, b, manager: DialogManager):
     # Удаление стратегий пользователя из объекта reports
     for strategy in selected_strategies:
         strategy_id, ticker_id, alarm_time_id = strategy.split()
-        await delete_user_strategy(chat_id, strategy_id, ticker_id, alarm_time_id)
+        await tg_api.delete_user_strategy(chat_id, strategy_id, ticker_id, alarm_time_id)
         reports.remove_user_strategy(chat_id, strategy)
         await reports.check_strategy(chat_id, strategy)  # Здесь будет остановка планировщика
 

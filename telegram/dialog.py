@@ -15,7 +15,7 @@ from telegram.windows_for_dialogs import (
     window_alarm_times, window_ack_strategy, window_confirmation,
     window_remove_strategies, window_ack_remove_strategies, window_repeat_strategy, window_strategy_limit
 )
-from api import delete_user
+import telegram.api as tg_api
 from telegram.handlers import reports
 from connection_oracle.delete_queries import delete_user_all_strategies
 
@@ -61,13 +61,13 @@ async def send_message(chat_id: int, notification: str, report: str):
     except TelegramForbiddenError:
         print(f"Пользователь c чатом id {chat_id} заблокировал бота.")
         bad_chat_ids.append(chat_id)
-        await delete_user(chat_id)
-        await delete_user_all_strategies(chat_id)
+        await tg_api.delete_user(chat_id)
+        await tg_api.delete_all_user_strategy(chat_id)
     except TelegramNotFound:
         print(f"Пользователь c чатом id {chat_id} не найден (удалён или не писал боту)")
         bad_chat_ids.append(chat_id)
-        await delete_user(chat_id)
-        await delete_user_all_strategies(chat_id)
+        await tg_api.delete_user(chat_id)
+        await tg_api.delete_all_user_strategy(chat_id)
 
 
 async def unpacking_message(message: json) -> tuple:
