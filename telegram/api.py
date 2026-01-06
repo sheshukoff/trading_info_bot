@@ -67,14 +67,45 @@ async def delete_job(job_id):
     return response.json()['job_id']
 
 
-async def change_job(load_function, ticker, timeframe):
+async def add_user_strategy(telegram_id, strategy, ticker, timeframe):
     body = {
-        "load_function": load_function,
+        "telegram_id": telegram_id,
+        "strategy": strategy,
         "ticker": ticker,
         "timeframe": timeframe
     }
 
-    end_point = f'{URL}/change_load_function'
-    response = requests.put(end_point, json=body, headers=HEADERS)
+    end_point = f'{URL}/using_strategy'
+
+    response = requests.post(end_point, json=body, headers=HEADERS)
+    print(response.json())
     await asyncio.sleep(0.1)
-    return response.json()['ticker']
+    return response.json()['ticker'], response.json()['timeframe']
+
+
+async def delete_user_strategy(telegram_id, strategy, ticker, timeframe):
+    body = {
+        "telegram_id": telegram_id,
+        "strategy": strategy,
+        "ticker": ticker,
+        "timeframe": timeframe
+    }
+
+    end_point = f'{URL}/using_strategy'
+
+    response = requests.delete(end_point, json=body, headers=HEADERS)
+    await asyncio.sleep(0.1)
+    return response.json()['strategy'], response.json()['ticker'], response.json()['timeframe']
+
+
+async def delete_all_user_strategy(telegram_id):
+    body = {
+        "telegram_id": telegram_id,
+    }
+
+    end_point = '/using_strategy{user}'
+    full_url = URL + end_point
+
+    response = requests.delete(full_url, json=body, headers=HEADERS)
+    await asyncio.sleep(0.1)
+    return response.json()['telegram_id']
