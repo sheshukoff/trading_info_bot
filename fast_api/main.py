@@ -183,10 +183,10 @@ async def delete_using_strategy(remove_strategy: DeleteUsingStrategy):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete('/using_strategy', tags=['Используемые стратегии'], summary='Удалить все стратегии пользователя')
+@app.delete('/using_strategy{user}', tags=['Используемые стратегии'], summary='Удалить все стратегии пользователя')
 async def delete_all_using_strategy(remove_all_strategy: DeleteUserAllStrategies):
     try:
-        result = delete_oracle.delete_user_all_strategies(remove_all_strategy.telegram_id)
+        result = await delete_oracle.delete_user_all_strategies(remove_all_strategy.telegram_id)
 
         return {
             "success": True,
