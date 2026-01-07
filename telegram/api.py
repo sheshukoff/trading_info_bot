@@ -109,3 +109,15 @@ async def delete_all_user_strategy(telegram_id):
     response = requests.delete(full_url, json=body, headers=HEADERS)
     await asyncio.sleep(0.1)
     return response.json()['telegram_id']
+
+
+async def get_max_strategy_user(telegram_id: int):
+    params = {
+        "telegram_id": telegram_id
+    }
+
+    end_point = f'{URL}/users'
+    response = requests.get(end_point, params=params, headers=HEADERS)
+    print(response.json())
+    await asyncio.sleep(0.1)
+    return response.json()['max_strategies_user']

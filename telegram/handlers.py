@@ -8,7 +8,6 @@ from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 import telegram.api as tg_api
 from reports.reports import reports
-from connection_oracle.get_queries import get_quantity_strategy_user
 
 
 router = Router()
@@ -97,7 +96,7 @@ async def on_choose_strategy(c, b, manager: DialogManager):
     user_strategy = f'{strategy} {coin} {timeframe}'
 
     user_strategy_exists = await check_user_strategy(chat_id, user_strategy)
-    user_strategy_limit = await get_quantity_strategy_user(chat_id)
+    user_strategy_limit = await tg_api.get_max_strategy_user(chat_id)
     print(user_strategy_limit, len(reports.get_user_strategies(chat_id)))
 
     if len(reports.get_user_strategies(chat_id)) >= user_strategy_limit:
