@@ -53,10 +53,6 @@ class DeleteUserAllStrategies(BaseModel):
     telegram_id: int
 
 
-class QuantityStrategy(BaseModel):
-    telegram_id: int
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await scheduler.start()
@@ -94,13 +90,14 @@ async def delete_user(delete_user: DeleteUser):
 
 
 @app.get('/users', tags=['Пользователи'], summary='Количество доступнух стратегий пользователю')
-async def create_user(quantity_strategy: QuantityStrategy):
+async def get_max_strategy_user(telegram_id: int):
     try:
-        result = await get_oracle.get_quantity_strategy_user(quantity_strategy.telegram_id)
+        result = await get_oracle.get_quantity_strategy_user(telegram_id)
+        print(result)
         return {
             'success': True,
-            'id': result,
-            'telegram_id': quantity_strategy.telegram_id,
+            'telegram_id': telegram_id,
+            'max_strategies_user': result,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
