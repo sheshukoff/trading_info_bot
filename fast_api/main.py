@@ -93,7 +93,7 @@ async def delete_user(delete_user: DeleteUser):
 async def get_max_strategy_user(telegram_id: int):
     try:
         result = await get_oracle.get_quantity_strategy_user(telegram_id)
-        print(result)
+
         return {
             'success': True,
             'telegram_id': telegram_id,
