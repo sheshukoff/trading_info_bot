@@ -4,9 +4,10 @@ from tzlocal import get_localzone
 import asyncio
 from aiohttp import ClientResponse
 import aiohttp
-from connection_oracle.get_queries import get_last_date, exists_ticker_and_timeframe
+from connection_oracle.get_queries import get_last_date, exists_ticker_and_timeframe, get_candles_df
 from connection_oracle.insert_queries import insert_okx_data
 from connection_oracle.connection_oracle_db import engine
+from strategies.strategies import AVAILABLE_STRATEGIES
 
 
 # --- Глобальная aiohttp сессия ---
@@ -141,6 +142,22 @@ async def get_data_okx(coin, timeframe):
     await insert_okx_data(df, engine, coin, timeframe)
 
     return df, coin, timeframe
+
+
+async def process_market_data(engine, coin, timeframe):
+    await get_data_okx(coin, timeframe)
+
+    df = await get_candles_df(engine, coin, timeframe)
+    print(df)
+    if df.empty:
+        return
+
+    for strategy in AVAILABLE_STRATEGIES:
+        print(strategy)
+        try:
+            await strategy(df, coin, timeframe)
+        except Exception as e:
+            print(e)
 
 
 async def main():
