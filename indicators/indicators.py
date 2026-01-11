@@ -9,7 +9,6 @@ def rsi_14(df: pd.DataFrame) -> pd.Series:
 
 def ema_x(df: pd.DataFrame, time_period, name):
     s = pd.Series(ta.EMA(df['close'], timeperiod=time_period), name=name)
-    s = s.round(1)
     return s
 
 
@@ -26,9 +25,9 @@ def ema_25(df: pd.DataFrame) -> pd.Series:
 
 
 def wma_50(df: pd.DataFrame) -> pd.Series:
-    part_processing = (df['high'] + df['lowest']) / 2
+    part_processing = (df['high'] + df['low']) / 2
     s = pd.Series(ta.WMA(part_processing, timeperiod=50), name='WMA_50')
-    return s.round(1)
+    return s
 
 
 if __name__ == '__main__':
