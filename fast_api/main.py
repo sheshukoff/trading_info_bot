@@ -5,14 +5,15 @@ from contextlib import asynccontextmanager
 import connection_oracle.delete_queries as delete_oracle
 import connection_oracle.insert_queries as insert_oracle
 import connection_oracle.get_queries as get_oracle
+from connection_oracle.connection_oracle_db import engine
 from scheduler.scheduler import DynamicSchedulerManager
-from connection_okx.aiohttp_get_data import get_data_okx
+from connection_okx.aiohttp_get_data import process_market_data
 
 
 scheduler = DynamicSchedulerManager()
 
 AVAILABLE_FUNCTIONS = {
-    "get_data_okx": get_data_okx
+    "process_market_data": process_market_data
 }
 
 
@@ -59,6 +60,12 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+
+def with_engine(func, engine):
+    async def wrapped(ticker, timeframe):
+        return await func(engine, ticker, timeframe)
+    return wrapped
 
 
 @app.post('/users', tags=['Пользователи'], summary='Довабить пользователя')
@@ -121,7 +128,7 @@ async def get_strategies_user(telegram_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post('/add_job', tags=['Работа'], summary='Довабить работу планировщику')
+@app.post('/add_job', tags=['Работа'], summary='Добавить работу планировщику')
 async def create_job(add_job: AddJob):
     try:
         if add_job.load_function not in AVAILABLE_FUNCTIONS:
@@ -130,8 +137,11 @@ async def create_job(add_job: AddJob):
                 detail=f"Функция '{add_job.load_function}' не найдена"
             )
 
-        load_function = AVAILABLE_FUNCTIONS[add_job.load_function]
+        base_func = AVAILABLE_FUNCTIONS[add_job.load_function]
+        load_function = with_engine(base_func, engine)
+
         scheduler.add_job(load_function, add_job.ticker, add_job.timeframe)
+
         return {
             'success': True,
             'load_function': add_job.load_function,
