@@ -10,8 +10,8 @@ config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 strategies = {
-    "RSI 14": ("RSI 14", 'get_data_okx', rsi_strategy),
-    "EMA/WMA": ("EMA/WMA", 'get_data_okx', ema_strategy),
+    "RSI 14": ("RSI 14", 'process_market_data', rsi_strategy),
+    "EMA/WMA": ("EMA/WMA", 'process_market_data', ema_strategy),
 }
 
 
