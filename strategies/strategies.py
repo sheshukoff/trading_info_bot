@@ -34,7 +34,7 @@ async def get_last_close(df: pd.DataFrame) -> float:
 
 
 async def get_last_time(df: pd.DataFrame):
-    return df['ts'].iloc[-1]
+    return df['timeframe'].iloc[-1]
 
 
 async def get_last_rsi(df: pd.DataFrame):
@@ -69,6 +69,7 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
 
     long_signal = ema_5_last > ema_12_last and ema_12_last > ema_25_last and close_last > wma_50_last
     short_signal = ema_5_last < ema_12_last and ema_12_last < ema_25_last and close_last < wma_50_last
+
     message = await summarize_trend_signal(close_last, long_signal, short_signal, last_time, ticker, timeframe)
 
     data = {
@@ -85,11 +86,11 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
         message = textwrap.dedent(f"""
         📊 <b>Стратегия на отскок цены RSI 14</b>
         📈 Информация по монете: <b>{ticker}</b> | Таймфрейм: <b>{timeframe}</b>
-        
+
         💰 Цена закрытия: <b>{format_price(last_price)}</b> USDT
         📊 RSI (14): <b>{last_rsi_value:.2f}</b>
         🕒 Время: {last_time}
-        
+
         Цели:
         1️⃣ Первый TP: <b>{last_price * 1.03:.2f}</b> (3% движения)
         2️⃣ Второй TP: <b>{last_price * 1.05:.2f}</b> (5% движения)
@@ -102,26 +103,30 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
 
 async def summarize_trend_signal(close: float, long_signal: bool, short_signal: bool, last_time: str, ticker: str,
                                  timeframe: str) -> str:
-    if long_signal == short_signal:
-        signal_text = '⏸️ WAIT'
-    elif long_signal:
+    if long_signal:
         signal_text = '🔼 LONG'
     elif short_signal:
         signal_text = '🔽 SHORT'
     else:
-        signal_text = '❓ Неизвестный сигнал'
+        # защита от некорректной логики стратегии
+        raise ValueError(
+            f"Invalid signal state: long={long_signal}, short={short_signal}"
+        )
 
     message = textwrap.dedent(f"""
     📊 <b>Трендовая стратегия EMA/WMA</b>
     📈 Информация по монете: <b>{ticker}</b> 
     🕒 Таймфрейм: <b>{timeframe}</b>
-    
+
     💰 Цена закрытия: <b>{format_price(close)}</b> USDT
     📍 Сигнал стратегии: <b>{signal_text}</b>
     🕒 Время: {last_time}
     """)
 
     return message
+
+
+AVAILABLE_STRATEGIES = [rsi_strategy, ema_strategy]
 
 
 async def main():
@@ -133,7 +138,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-# Посмотреть примеры как работает сначала один отработал и пошел делать другое
-# Сначала получил информацию с биржи OKX, затем вывел информацию о решении покупки продажи и ожидания
-# https://github.com/stelmakhdigital/Predict_Stock_and_Crypto_for_Invest аналог проекта
