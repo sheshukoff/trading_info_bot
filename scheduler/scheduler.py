@@ -7,10 +7,10 @@ from apscheduler.job import Job
 
 class DynamicSchedulerManager:
     __ALARM_TIMES = {
-        '1m': {'second': 0},
-        '5m': {'minute': '*/5', 'second': 0},
-        '15m': {'minute': '*/15', 'second': 0},
-        '30m': {'minute': '*/30', 'second': 0},
+        '1m': {'second': 5},
+        '5m': {'minute': '*/5', 'second': 5},
+        '15m': {'minute': '*/15', 'second': 5},
+        '30m': {'minute': '*/30', 'second': 5},
         '1H': {'minute': 0, 'second': 5},
         '4H': {'hour': '3-23/4', 'minute': 0, 'second': 5},
         '6H': {'hour': '3-23/6', 'minute': 0, 'second': 5},
