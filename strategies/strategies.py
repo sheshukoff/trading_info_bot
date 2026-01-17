@@ -52,7 +52,7 @@ async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     if signal_active:
         data = {
             'message': message,
-            'report': f'RSI 14 {ticker} {timeframe}',
+            'report': f'RSI 14|{ticker}|{timeframe}',
         }
 
         await periodic_publisher(data)
@@ -74,7 +74,7 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
 
     data = {
         'message': message,
-        'report': f'EMA/WMA {ticker} {timeframe}',
+        'report': f'EMA/WMA|{ticker}|{timeframe}',
     }
 
     await periodic_publisher(data)
@@ -85,7 +85,8 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
     if last_rsi_value < 30:
         message = textwrap.dedent(f"""
         📊 <b>Стратегия на отскок цены RSI 14</b>
-        📈 Информация по монете: <b>{ticker}</b> | Таймфрейм: <b>{timeframe}</b>
+        📈 Информация по монете: <b>{ticker}</b> 
+        🕒 Таймфрейм: <b>{timeframe}</b>
 
         💰 Цена закрытия: <b>{format_price(last_price)}</b> USDT
         📊 RSI (14): <b>{last_rsi_value:.2f}</b>
