@@ -18,6 +18,7 @@ from telegram.windows_for_dialogs import (
 import telegram.api as tg_api
 from telegram.handlers import reports
 from connection_oracle.delete_queries import delete_user_all_strategies
+from connection_oracle.get_queries import get_data_for_stop_scheduler
 
 config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
@@ -43,6 +44,26 @@ dialog = Dialog(
 bad_chat_ids = []
 
 
+async def stop_scheduler(chat_id):
+    try:
+        un_use_data = await get_data_for_stop_scheduler(chat_id)
+        if un_use_data:
+            for ticker, timeframe in un_use_data:
+                job_id = f'{ticker} {timeframe}'
+                await tg_api.delete_job(job_id)
+    except Exception as e:
+        print(f"Ошибка при очистке scheduler: {e}")
+
+
+async def handle_blocked_user(chat_id):
+    try:
+        await tg_api.delete_all_user_strategy(chat_id)
+        await tg_api.delete_user(chat_id)
+        print(f"Пользователь {chat_id} полностью удалён")
+    except Exception as e:
+        print(f"Ошибка при удалении пользователя {chat_id}: {e}")
+
+
 async def iterate_chat_ids(chat_ids):
     for chat_id in chat_ids:
         await asyncio.sleep(0)
@@ -58,16 +79,10 @@ async def unnecessary_chat_id(bad_chat_ids: list, chat_ids: list):
 async def send_message(chat_id: int, notification: str, report: str):
     try:
         await bot.send_message(chat_id=chat_id, text=notification, parse_mode="HTML")
-    except TelegramForbiddenError:
+    except (TelegramForbiddenError, TelegramNotFound):
         print(f"Пользователь c чатом id {chat_id} заблокировал бота.")
-        bad_chat_ids.append(chat_id)
-        await tg_api.delete_user(chat_id)
-        await tg_api.delete_all_user_strategy(chat_id)
-    except TelegramNotFound:
-        print(f"Пользователь c чатом id {chat_id} не найден (удалён или не писал боту)")
-        bad_chat_ids.append(chat_id)
-        await tg_api.delete_user(chat_id)
-        await tg_api.delete_all_user_strategy(chat_id)
+        await stop_scheduler(chat_id)
+        await handle_blocked_user(chat_id)
 
 
 async def unpacking_message(message: json) -> tuple:
@@ -131,15 +146,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print('exit')
-
-
-# Планы на сегодня:
-# Закончить добавление стратегии
-# Затем запусктить эти стратегии в работу
-# По возможности сделать вывод информации (что делать покупать или продавать)
-# Отредактировать отображение цены где монета стоит очень мало например PEPE-USDT редактировать в strategy
-# Telegram server says - Bad Request: chat not found если приходит такое сообщение то пользователя удалить из БД
-# По чистить код от принтов
-# Оставляю reports так как будет работать быстрее, БД для хранения
-# До 10 пользователей то окей пойдет просто меняю через БД, количество подключаемых стратегий (Дальше разный уровень пользователя)
-# Делаем FAST API надо посмотреть про API
