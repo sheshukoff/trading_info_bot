@@ -8,6 +8,7 @@ from telegram.states import MainSG
 from rmq.consumer import send_to_queue
 import telegram.api as tg_api
 from reports.reports import reports
+from connection_oracle.get_queries import ticker_and_timeframe_un_use_others
 
 
 router = Router()
@@ -93,7 +94,7 @@ async def on_choose_strategy(c, b, manager: DialogManager):
     else:
         chat_id = manager.event.from_user.id
 
-    user_strategy = f'{strategy} {coin} {timeframe}'
+    user_strategy = f'{strategy}|{coin}|{timeframe}'
 
     user_strategy_exists = await check_user_strategy(chat_id, user_strategy)
     user_strategy_limit = await tg_api.get_max_strategy_user(chat_id)
@@ -146,7 +147,15 @@ async def on_remove_strategies(c, b, manager: DialogManager):
 
     # Удаление стратегий пользователя из объекта reports
     for strategy in selected_strategies:
-        strategy_id, ticker_id, alarm_time_id = strategy.split()
+        print(strategy)
+        strategy_id, ticker_id, alarm_time_id = strategy.split('|')
+
+        un_use_data = await ticker_and_timeframe_un_use_others(ticker_id, alarm_time_id, chat_id)
+        print(un_use_data)
+        if un_use_data:
+            job_id = f'{ticker_id} {alarm_time_id}'
+            await tg_api.delete_job(job_id)
+
         await tg_api.delete_user_strategy(chat_id, strategy_id, ticker_id, alarm_time_id)
         reports.remove_user_strategy(chat_id, strategy)
         await reports.check_strategy(chat_id, strategy)  # Здесь будет остановка планировщика
@@ -188,15 +197,14 @@ async def choosing_strategy(message: Message):
     text = "<b>📊 Ваши активные стратегии:</b>\n\n"
 
     if list_strategies:
-        for i, item in enumerate(list_strategies.split('\n'), 1):
-            parts = item.split()
-            name = " ".join(parts[:-2])
-            symbol = parts[-2]
-            tf = parts[-1]
+        for i, user_strategy in enumerate(list_strategies, 1):
+            strategy = user_strategy['strategy']
+            symbol = user_strategy['ticker']
+            timeframe = user_strategy['timeframe']
 
             text += (
-                f"{i}. 📌 <b>{name}</b>\n"
-                f"     💱 <b>{symbol}</b> — <b>{tf}</b>\n\n"
+                f"{i}. 📌 <b>{strategy}</b>\n"
+                f"     💱 <b>{symbol}</b> — <b>{timeframe}</b>\n\n"
             )
 
         await message.answer(text, parse_mode="HTML")
