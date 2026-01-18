@@ -1,17 +1,15 @@
 import asyncio
 import aiorabbit
 import json
-
 from telegram.api import add_job
-from strategies.strategies import rsi_strategy, ema_strategy
 from dotenv import dotenv_values
 
 config = dotenv_values("../.env")
 RABBITMQ_URL = config.get("RABBITMQ_URL")
 
 strategies = {
-    "RSI 14": ("RSI 14", 'process_market_data', rsi_strategy),
-    "EMA/WMA": ("EMA/WMA", 'process_market_data', ema_strategy),
+    "RSI 14": ("RSI 14", 'process_market_data'),
+    "EMA/WMA": ("EMA/WMA", 'process_market_data'),
 }
 
 
@@ -53,8 +51,8 @@ async def consume_message():
                 coin = result.get('coin')
                 timeframe = result.get('timeframe')
 
-                strategy_name, load_function, strategy_function = strategies[strategy]
-                print(strategy_name, load_function, strategy_function)
+                strategy_name, load_function = strategies[strategy]
+                print(strategy_name, load_function)
 
                 await add_job(load_function, coin, timeframe)
 
@@ -70,12 +68,3 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('exit')
 
-#  Должно запустится код достающий данные из биржи
-
-# 1 часть уже есть
-# 2 часть
-# сообщение о том что делать отправить в Rabbit MQ
-# 3 часть уже телеграмм должен слушать
-# 4 при нажатии на кнопки отправлять
-
-# текст отчета и его название
