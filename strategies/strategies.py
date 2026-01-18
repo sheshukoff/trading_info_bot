@@ -105,9 +105,9 @@ async def coin_information_rsi(last_price: float, last_rsi_value: float, last_ti
 async def summarize_trend_signal(close: float, long_signal: bool, short_signal: bool, last_time: str, ticker: str,
                                  timeframe: str) -> str:
     if long_signal:
-        signal_text = '🔼 LONG'
+        signal_text = '🟢 LONG'
     elif short_signal:
-        signal_text = '🔽 SHORT'
+        signal_text = '🔴 SHORT'
     else:
         # защита от некорректной логики стратегии
         raise ValueError(
