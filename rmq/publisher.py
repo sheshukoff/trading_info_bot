@@ -1,6 +1,4 @@
-import asyncio
 import aiorabbit
-import datetime
 from dotenv import dotenv_values
 
 config = dotenv_values("../.env")
@@ -28,19 +26,3 @@ async def periodic_publisher(message):
 
     except Exception as e:
         print(f'Error: {e}')
-
-
-# core <- tasks
-# core -> periodic_queue (5sec)
-
-# message_count = 0
-#
-# while True:
-#     message_count += 1
-#
-#     message_body = (
-#         f'Сообщение #{message_count}'
-#         f'отправлено в {datetime.datetime.now()}'
-#     )
-
-# await asyncio.sleep(5)
