@@ -14,6 +14,12 @@ from connection_oracle.get_queries import ticker_and_timeframe_un_use_others
 router = Router()
 
 
+async def get_chat_id(manager: DialogManager):
+    if manager.event.message:
+        return manager.event.message.chat.id
+    return manager.event.from_user.id
+
+
 async def start(message: Message, dialog_manager: DialogManager):
     await dialog_manager.start(MainSG.start, mode=StartMode.RESET_STACK)
 
@@ -23,10 +29,10 @@ async def on_start_menu(callback, button, manager: DialogManager):
 
     # безопасно получаем chat_id
     if manager.event.message:
-        chat_id = manager.event.message.chat.id
+        chat_id = await get_chat_id(manager)
         user_name = manager.event.message.chat.username or f"user_{chat_id}"
     else:
-        chat_id = manager.event.from_user.id
+        chat_id = await get_chat_id(manager)
         user_name = manager.event.from_user.username or f"user_{chat_id}"
 
     await tg_api.add_user(chat_id, user_name)
@@ -38,10 +44,7 @@ async def on_start_menu(callback, button, manager: DialogManager):
 
 
 async def return_start_menu(callback, button, manager: DialogManager):
-    if manager.event.message:
-        chat_id = manager.event.message.chat.id
-    else:
-        chat_id = manager.event.from_user.id
+    chat_id = await get_chat_id(manager)
 
     await manager.event.bot.send_message(
         chat_id=chat_id,
@@ -89,10 +92,7 @@ async def on_choose_strategy(c, b, manager: DialogManager):
     coin = await selected_data_value(manager, "coins")
     timeframe = await selected_data_value(manager, "alarm_times")
 
-    if manager.event.message:
-        chat_id = manager.event.message.chat.id
-    else:
-        chat_id = manager.event.from_user.id
+    chat_id = await get_chat_id(manager)
 
     user_strategy = f'{strategy}|{coin}|{timeframe}'
 
@@ -134,18 +134,11 @@ async def get_user_strategies(dialog_manager: DialogManager, **kwargs):
 
 
 async def on_remove_strategies(c, b, manager: DialogManager):
-    if manager.event.message:
-        chat_id = manager.event.message.chat.id
-    else:
-        chat_id = manager.event.from_user.id
+    chat_id = await get_chat_id(manager)
 
-    # Получаем выбранные значения из мультиселекта напрямую
     widget = manager.find("remove_strategies")
     selected_strategies = widget.get_checked()
 
-    print(f"Выбранные опции: {selected_strategies}")
-
-    # Удаление стратегий пользователя из объекта reports
     for strategy in selected_strategies:
         print(strategy)
         strategy_id, ticker_id, alarm_time_id = strategy.split('|')
@@ -158,9 +151,7 @@ async def on_remove_strategies(c, b, manager: DialogManager):
 
         await tg_api.delete_user_strategy(chat_id, strategy_id, ticker_id, alarm_time_id)
         reports.remove_user_strategy(chat_id, strategy)
-        await reports.check_strategy(chat_id, strategy)  # Здесь будет остановка планировщика
 
-    # Сохраняем в dialog_data для передачи на следующий экран
     manager.dialog_data["selected"] = selected_strategies
     await manager.switch_to(MainSG.ack_remove_strategies)
 
