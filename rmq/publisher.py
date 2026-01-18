@@ -15,8 +15,8 @@ async def periodic_publisher(message):
                 routing_key='periodic_queue',
                 message_body=message,
                 content_type='text/plain',
-                exchange='',  # необязательно
-                app_id='periodic_publisher'  # необязательно
+                exchange='',
+                app_id='periodic_publisher'
             )
 
             if success:
