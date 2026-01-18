@@ -1,16 +1,13 @@
-from connection_oracle.queries_to_oracle import get_coins, get_alarm_times
-from connection_oracle.get_queries import get_quantity_strategy_user
+from connection_oracle.get_queries import get_strategies, get_coins, get_alarm_times, get_quantity_strategy_user
 
 
 async def get_strategies_data(dialog_manager, **kwargs):
-    return {
-        "strategies": ['RSI 14', 'EMA/WMA']  # (name, id) # TODO будет из бд ORACLE
-    }
+    strategies = await get_strategies()
+    return {"strategies": strategies}
 
 
 async def get_coins_data(dialog_manager, **kwargs):
     coins = await get_coins()
-    print(coins)
     return {"coins": coins}
 
 
