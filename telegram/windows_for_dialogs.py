@@ -110,7 +110,7 @@ window_repeat_strategy = Window(
 window_ack_strategy = Window(
     Format("Вы выбрали стратегию \n\n <b>{selected_strategy} {selected_coins} {selected_alarm_times}</b>"),
     Row(
-        Button(Const('Подтвердить выбранную стратегию'), id='ack_strategy', on_click=on_choose_strategy)
+        Button(Const('Подтвердить'), id='ack_strategy', on_click=on_choose_strategy)
     ),
     getter=[selected_strategy, selected_coins, selected_alarm_times],
     state=MainSG.ack_strategy,
