@@ -1,6 +1,4 @@
-import asyncio
 import textwrap
-
 import pandas as pd
 from indicators.indicators import ema_5, ema_12, ema_25, wma_50, rsi_14
 from rmq.publisher import periodic_publisher
@@ -16,14 +14,11 @@ def format_price(price: float, small_digit: int = 12) -> str:
     if price == 0:
         return "0"
 
-    # если число меньше 1 — используем больше знаков после запятой, чтобы не потерять точность
     if abs(price) < 1:
         formatted = f"{price:.{small_digit}f}"
     else:
-        # для больших чисел — не более 6 знаков после запятой
         formatted = f"{price:.6f}"
 
-    # убираем хвостовые нули и лишнюю точку
     formatted = formatted.rstrip("0").rstrip(".")
 
     return formatted
@@ -44,7 +39,6 @@ async def get_last_rsi(df: pd.DataFrame):
 async def rsi_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     last_price = await get_last_close(df)
     rsi_14_last = await get_last_rsi(df)
-    print(rsi_14_last)
     last_time = await get_last_time(df)
 
     message, signal_active = await coin_information_rsi(last_price, rsi_14_last, last_time, ticker, timeframe)
@@ -63,7 +57,7 @@ async def ema_strategy(df: pd.DataFrame, ticker: str, timeframe: str) -> None:
     ema_12_last = ema_12(df).iloc[-1]
     ema_25_last = ema_25(df).iloc[-1]
     wma_50_last = wma_50(df).iloc[-1]
-    # print(ema_5_last, ema_12_last, ema_25_last, wma_50_last)
+
     close_last = df['close'].iloc[-1]
     last_time = await get_last_time(df)
 
@@ -109,7 +103,6 @@ async def summarize_trend_signal(close: float, long_signal: bool, short_signal: 
     elif short_signal:
         signal_text = '🔴 SHORT'
     else:
-        # защита от некорректной логики стратегии
         raise ValueError(
             f"Invalid signal state: long={long_signal}, short={short_signal}"
         )
@@ -128,14 +121,3 @@ async def summarize_trend_signal(close: float, long_signal: bool, short_signal: 
 
 
 AVAILABLE_STRATEGIES = [rsi_strategy, ema_strategy]
-
-
-async def main():
-    df = pd.read_csv('../BTC-USDT_1m.csv')
-    print(df.dtypes)
-    print(await rsi_strategy(df, "BTC-USDT", '1m'))
-    # print(await ema_strategy(df, ticker))
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
