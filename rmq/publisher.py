@@ -1,4 +1,5 @@
 import aiorabbit
+import json
 from dotenv import dotenv_values
 
 config = dotenv_values("../.env")
@@ -12,11 +13,9 @@ async def periodic_publisher(message):
             await client.queue_declare('periodic_queue')
 
             success = await client.publish(
+                exchange="",
                 routing_key='periodic_queue',
-                message_body=message,
-                content_type='text/plain',
-                exchange='',
-                app_id='periodic_publisher'
+                message_body=json.dumps(message).encode("utf-8")
             )
 
             if success:
