@@ -108,22 +108,24 @@ window_repeat_strategy = Window(
 
 
 window_ack_strategy = Window(
-    Format("Вы выбрали стратегию \n\n {selected_strategy} {selected_coins} {selected_alarm_times}"),
+    Format("Вы выбрали стратегию \n\n <b>{selected_strategy} {selected_coins} {selected_alarm_times}</b>"),
     Row(
         Button(Const('Подтвердить выбранную стратегию'), id='ack_strategy', on_click=on_choose_strategy)
     ),
     getter=[selected_strategy, selected_coins, selected_alarm_times],
-    state=MainSG.ack_strategy
+    state=MainSG.ack_strategy,
+    parse_mode="HTML"
 )
 
 window_confirmation = Window(
-    Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
+    Format("Вы выбрали стратегию \n\n <b>{selected_strategy} {selected_coins} {selected_alarm_times}</b>"),
     Row(
         Button(Const('В меню'), id='to_menu', on_click=return_start_menu),
         Button(Const('Добавить еще'), id='add_strategy', on_click=on_add_strategy),
     ),
     getter=[selected_strategy, selected_coins, selected_alarm_times],
     state=MainSG.summary,
+    parse_mode="HTML"
 )
 
 
