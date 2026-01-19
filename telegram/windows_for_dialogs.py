@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.kbd import (Button, Group, Next, Row, Checkbox, Select, ScrollingGroup,
-                                        Multiselect, Column, Back)
+                                        Multiselect, Column)
 from aiogram_dialog.widgets.text import Const, Format
 
 from telegram.states import MainSG
