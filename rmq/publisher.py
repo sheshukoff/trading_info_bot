@@ -1,6 +1,6 @@
 import asyncio
 import aiorabbit
-import datetime
+import json
 from dotenv import dotenv_values
 
 config = dotenv_values("../.env")
@@ -14,11 +14,9 @@ async def periodic_publisher(message):
             await client.queue_declare('periodic_queue')
 
             success = await client.publish(
+                exchange="",
                 routing_key='periodic_queue',
-                message_body=message,
-                content_type='text/plain',
-                exchange='',  # необязательно
-                app_id='periodic_publisher'  # необязательно
+                message_body=json.dumps(message).encode("utf-8")
             )
 
             if success:
@@ -28,19 +26,3 @@ async def periodic_publisher(message):
 
     except Exception as e:
         print(f'Error: {e}')
-
-
-# core <- tasks
-# core -> periodic_queue (5sec)
-
-# message_count = 0
-#
-# while True:
-#     message_count += 1
-#
-#     message_body = (
-#         f'Сообщение #{message_count}'
-#         f'отправлено в {datetime.datetime.now()}'
-#     )
-
-# await asyncio.sleep(5)
