@@ -1,4 +1,3 @@
-import asyncio
 import aiorabbit
 import json
 from dotenv import dotenv_values
