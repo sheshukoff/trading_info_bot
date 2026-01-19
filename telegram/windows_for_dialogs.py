@@ -108,7 +108,7 @@ window_repeat_strategy = Window(
 
 
 window_ack_strategy = Window(
-    Format("Вы выбрали стратегию {selected_strategy} {selected_coins} {selected_alarm_times}"),
+    Format("Вы выбрали стратегию \n\n {selected_strategy} {selected_coins} {selected_alarm_times}"),
     Row(
         Button(Const('Подтвердить выбранную стратегию'), id='ack_strategy', on_click=on_choose_strategy)
     ),
